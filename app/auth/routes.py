@@ -4,27 +4,42 @@ from . import auth_bp
 from ..models import Usuario
 from ..extensions import bcrypt
 
-@auth_bp.route('/login',methods = ['GET','POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    #Si el usuario ya inicio sesion lo mandamos al main dashbpard
+    # Si intento entrar al login ya estando logueado, me auto-redirijo al Dashboard
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-    
-    if request.method =='POST':
-        username = request.form.get('username')
+        if current_user.rol.nombre.lower() in ['administrador', 'auxiliar']:
+            return redirect(url_for('main.index'))
+        return redirect(url_for('estudiante.dashboard'))
+
+    if request.method == 'POST':
+        username = request.form.get('username').strip()
         password = request.form.get('password')
 
-        #Buscamos al usuario en la base de datos
+        # Busco mis credenciales en la tabla unificada de Usuarios
         usuario = Usuario.query.filter_by(username=username).first()
 
-        #Verificamos que exista y que la contra encriptada coincida
+        # Valido la existencia y la contraseña encriptada
         if usuario and bcrypt.check_password_hash(usuario.password_hash, password):
-            login_user(usuario)
-            return redirect(url_for('main.index'))
-        else:
-            flash('Usuario o contraseña incorrectos. Intenta nuevamente','danger')
+            if not usuario.estado:
+                flash('Esta cuenta se encuentra inactiva. Comunícate con el administrador.', 'danger')
+                return redirect(url_for('auth.login'))
 
-    #Si es una peticion GET (solo entrar a la pagina). Y mostramos el form del login
+            # Levanto la sesión segura en Flask
+            login_user(usuario)
+            
+            # --- CORRECCIÓN DE FLUJO ---
+            # Redirección inteligente al Dashboard Principal de mi rol
+            if usuario.rol.nombre.lower() in ['administrador', 'auxiliar']:
+                flash(f'Bienvenido al sistema, {usuario.nombres}.', 'success')
+                return redirect(url_for('main.index'))
+            else:
+                flash(f'Hola {usuario.nombres}, has iniciado sesión correctamente.', 'success')
+                return redirect(url_for('estudiante.dashboard'))
+        else:
+            flash('Credenciales incorrectas. Por favor, intenta de nuevo.', 'danger')
+            return redirect(url_for('auth.login'))
+
     return render_template('auth/login.html')
 
 @auth_bp.route('/logout')

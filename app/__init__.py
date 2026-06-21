@@ -15,7 +15,12 @@ def create_app(config_class=Config):
     migrate.init_app(app,db)
     login_manager.init_app(app)
     bcrypt.init_app(app)
-    
+
+    # Dentro de mi función de configuración de extensiones o en create_app():
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Por favor, inicia sesión para acceder a esta sección del sistema.'
+    login_manager.login_message_category = 'warning'
+        
     with app.app_context():
         from . import models
         db.create_all()
