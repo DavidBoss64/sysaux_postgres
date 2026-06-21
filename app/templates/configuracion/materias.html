@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Materias - SysAux{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-0"><i class="bi bi-book-half text-primary me-2"></i>Control de Materias</h2>
+        <h5 class="text-muted mt-1">Configuración base de asignaturas del sistema</h5>
+    </div>
+    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#crearMateriaModal">
+        <i class="bi bi-plus-circle-fill me-2"></i>Agregar Nueva Materia
+    </button>
+</div>
+
+<div class="mb-3">
+    <div class="input-group shadow-sm rounded-3" style="max-width: 400px;">
+        <span class="input-group-text bg-white border-end-0 text-muted">
+            <i class="bi bi-search"></i>
+        </span>
+        <input type="text" id="buscadorMaterias" class="form-control border-start-0 shadow-none ps-0" 
+               placeholder="Buscar por nombre o sigla de la materia...">
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4" style="width: 70px;">N°</th>
+                        <th style="width: 150px;">Sigla</th>
+                        <th>Nombre de la Materia</th>
+                        <th class="text-end pe-4" style="width: 150px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if materias %}
+                    {% for materia in materias %}
+                    <tr class="fila-materia">
+                        <td class="ps-4 text-muted fw-bold">{{ loop.index }}</td>
+                        <td><span class="badge bg-secondary px-3 py-2 fs-6">{{ materia.sigla }}</span></td>
+                        <td class="fw-bold text-dark">{{ materia.nombre }}</td>
+                        <td class="text-end pe-4">
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal"
+                                data-bs-target="#editarMateriaModal{{ materia.id }}" title="Modificar materia">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+
+                            <form action="{{ url_for('configuracion.eliminar_materia', id=materia.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Dar de baja"
+                                    onclick="return confirm('¿Estás seguro de dar de baja esta materia? Se mantendrán sus datos históricos.');">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+
+                        <div class="modal fade text-start" id="editarMateriaModal{{ materia.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 rounded-4 shadow">
+                                    <div class="modal-header bg-light rounded-top-4 py-3">
+                                        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-secondary me-2"></i>Modificar Materia</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('configuracion.editar_materia', id=materia.id) }}">
+                                        <div class="modal-body p-4">
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted fw-semibold text-sm">Sigla / Código *</label>
+                                                <input type="text" class="form-control text-uppercase" name="sigla" value="{{ materia.sigla }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted fw-semibold text-sm">Nombre de la Asignatura *</label>
+                                                <input type="text" class="form-control" name="nombre" value="{{ materia.nombre }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-light py-3">
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-success fw-bold">Guardar Cambios</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="bi bi-book display-6 d-block mb-3 text-secondary opacity-50"></i>
+                            <h5>No hay materias registradas</h5>
+                            <p class="text-sm">Agrega asignaturas para poder vincularlas a tus nuevos paralelos.</p>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="crearMateriaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-light rounded-top-4 border-bottom-0 py-3">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="bi bi-journal-plus text-primary me-2"></i>Nueva Materia
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('configuracion.lista_materias') }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold text-sm">Sigla (Ej: MAT-114) *</label>
+                        <input type="text" class="form-control text-uppercase" name="sigla" placeholder="Introduce la sigla única" required autocomplete="off">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold text-sm">Nombre Completo de la Materia *</label>
+                        <input type="text" class="form-control" name="nombre" placeholder="Ej: Matemática Discreta" required autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4 border-top-0 py-3">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Registrar Materia</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Filtro inmediato en el cliente para evitar consultas al servidor
+document.getElementById('buscadorMaterias').addEventListener('keyup', function() {
+    let filtro = this.value.toLowerCase().trim();
+    let filas = document.querySelectorAll('.fila-materia');
+
+    filas.forEach(function(fila) {
+        let textoFila = fila.textContent.toLowerCase();
+        if (textoFila.includes(filtro)) {
+            fila.style.display = '';
+        } else {
+            fila.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

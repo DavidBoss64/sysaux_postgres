@@ -12,7 +12,8 @@
         <h5 class="text-muted mt-1">{{ paralelo.materia.nombre }} - Paralelo {{ paralelo.nombre }}</h5>
     </div>
     <div>
-        <button class="btn btn-outline-success shadow-sm me-2" disabled title="Próximamente: Carga mediante Excel">
+        <button class="btn btn-outline-success shadow-sm me-2" data-bs-toggle="modal"
+            data-bs-target="#importarExcelModal">
             <i class="bi bi-file-earmark-excel"></i> Importar Excel
         </button>
         <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#inscribirEstudianteModal">
@@ -26,8 +27,8 @@
         <span class="input-group-text bg-white border-end-0 text-muted">
             <i class="bi bi-search"></i>
         </span>
-        <input type="text" id="buscadorEstudiantesLista" class="form-control border-start-0 shadow-none ps-0" 
-               placeholder="Buscar por apellido, nombre, C.I. o R.U....">
+        <input type="text" id="buscadorEstudiantesLista" class="form-control border-start-0 shadow-none ps-0"
+            placeholder="Buscar por apellido, nombre, C.I. o R.U....">
     </div>
 </div>
 
@@ -58,7 +59,8 @@
                             {% if inscripcion.estudiante.ru %}
                             <span class="badge bg-light text-dark border">{{ inscripcion.estudiante.ru }}</span>
                             {% else %}
-                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle">Pendiente</span>
+                            <span
+                                class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle">Pendiente</span>
                             {% endif %}
                         </td>
                         <td class="text-muted small">{{ inscripcion.fecha_inscripcion.strftime('%d-%m-%Y') }}</td>
@@ -94,24 +96,28 @@
                                         <div class="modal-body p-4">
                                             <div class="row g-3 mb-3">
                                                 <div class="col-md-6">
-                                                    <label class="form-label text-muted fw-semibold text-sm">Apellidos *</label>
+                                                    <label class="form-label text-muted fw-semibold text-sm">Apellidos
+                                                        *</label>
                                                     <input type="text" class="form-control" name="apellidos"
                                                         value="{{ inscripcion.estudiante.apellidos }}" required>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label text-muted fw-semibold text-sm">Nombres *</label>
+                                                    <label class="form-label text-muted fw-semibold text-sm">Nombres
+                                                        *</label>
                                                     <input type="text" class="form-control" name="nombres"
                                                         value="{{ inscripcion.estudiante.nombres }}" required>
                                                 </div>
                                             </div>
                                             <div class="row g-3">
                                                 <div class="col-md-6">
-                                                    <label class="form-label text-muted fw-semibold text-sm">C.I. *</label>
+                                                    <label class="form-label text-muted fw-semibold text-sm">C.I.
+                                                        *</label>
                                                     <input type="text" class="form-control" name="ci"
                                                         value="{{ inscripcion.estudiante.ci }}" required>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label text-muted fw-semibold text-sm">R.U.</label>
+                                                    <label
+                                                        class="form-label text-muted fw-semibold text-sm">R.U.</label>
                                                     <input type="text" class="form-control" name="ru"
                                                         value="{{ inscripcion.estudiante.ru or '' }}">
                                                 </div>
@@ -133,7 +139,8 @@
                         <td colspan="7" class="text-center py-5 text-muted">
                             <i class="bi bi-person-bounding-box display-6 d-block mb-3 text-secondary opacity-50"></i>
                             <h5>No hay estudiantes inscritos</h5>
-                            <p class="text-sm">Comparte el código de inscripción <strong>{{ paralelo.codigo_inscripcion or 'N/A' }}</strong> o inscribe alumnos manualmente.</p>
+                            <p class="text-sm">Comparte el código de inscripción <strong>{{ paralelo.codigo_inscripcion
+                                    or 'N/A' }}</strong> o inscribe alumnos manualmente.</p>
                         </td>
                     </tr>
                     {% endif %}
@@ -155,7 +162,8 @@
             <form method="POST" action="{{ url_for('gestion.estudiantes', id=paralelo.id) }}">
                 <div class="modal-body p-4">
                     <div class="alert alert-info text-sm py-2">
-                        <i class="bi bi-info-circle me-1"></i> Si el estudiante es nuevo, su usuario y contraseña serán su número de C.I.
+                        <i class="bi bi-info-circle me-1"></i> Si el estudiante es nuevo, su usuario y contraseña serán
+                        su número de C.I.
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -171,17 +179,20 @@
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label text-muted fw-semibold text-sm">Carnet de Identidad (C.I.) *</label>
+                            <label class="form-label text-muted fw-semibold text-sm">Carnet de Identidad (C.I.)
+                                *</label>
                             <input type="text" class="form-control" name="ci" required autocomplete="off">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted fw-semibold text-sm">Registro Universitario (R.U.)</label>
+                            <label class="form-label text-muted fw-semibold text-sm">Registro Universitario
+                                (R.U.)</label>
                             <input type="text" class="form-control" name="ru" placeholder="Opcional" autocomplete="off">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4 border-top-0 py-3">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-secondary px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary px-4 fw-bold">Inscribir Alumno</button>
                 </div>
             </form>
@@ -192,18 +203,64 @@
 
 {% block scripts %}
 <script>
-document.getElementById('buscadorEstudiantesLista').addEventListener('keyup', function() {
-    let filtro = this.value.toLowerCase().trim();
-    let filas = document.querySelectorAll('.fila-estudiante');
+    document.getElementById('buscadorEstudiantesLista').addEventListener('keyup', function () {
+        let filtro = this.value.toLowerCase().trim();
+        let filas = document.querySelectorAll('.fila-estudiante');
 
-    filas.forEach(function(fila) {
-        let textoFila = fila.textContent.toLowerCase();
-        if (textoFila.includes(filtro)) {
-            fila.style.display = '';
-        } else {
-            fila.style.display = 'none';
-        }
+        filas.forEach(function (fila) {
+            let textoFila = fila.textContent.toLowerCase();
+            if (textoFila.includes(filtro)) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
     });
-});
 </script>
+
+
+<div class="modal fade" id="importarExcelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-light rounded-top-4 border-bottom-0 py-3">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="bi bi-file-earmark-excel-fill text-success me-2"></i>Importación Masiva desde Excel
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form method="POST" action="{{ url_for('gestion.importar_estudiantes', id=paralelo.id) }}"
+                enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="alert alert-info text-sm py-2 mb-3">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        <strong>Formato de Lista Oficial:</strong> El Excel debe contener 3 columnas: Nombres y
+                        Apellidos, C.I., R.U.
+                        <br><small class="text-muted">* Consejo de precisión: Si la lista del docente separa los
+                            Apellidos de los Nombres usando una coma (ej: López, Juan Carlos), el sistema lo procesará
+                            de forma exacta sin importar si tiene uno o dos apellidos.</small>
+                    </div>
+
+                    <div class="alert alert-warning text-sm py-2 mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        El campo <span class="fw-bold">R.U. es opcional</span>. Si algún estudiante de primer ingreso no
+                        lo tiene, puedes dejar esa celda en blanco. El <span class="fw-bold">C.I. es obligatorio</span>.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold text-sm">Selecciona el archivo de
+                            calificaciones/estudiantes (.xlsx) *</label>
+                        <input type="file" class="form-control" name="archivo_excel" accept=".xlsx, .xlsm" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4 border-top-0 py-3">
+                    <button type="button" class="btn btn-outline-secondary px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success px-4 fw-bold">Procesar Carga</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

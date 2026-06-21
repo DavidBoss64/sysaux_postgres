@@ -21,6 +21,7 @@
             letter-spacing: 0.5px;
         }
 
+        /* Mi clase para asegurar que el footer siempre se quede al fondo de la pantalla */
         footer {
             margin-top: auto;
         }
@@ -40,37 +41,47 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-
             <div class="collapse navbar-collapse" id="navbarNav">
 
                 {% if current_user.is_authenticated %}
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 mt-3 mt-lg-0">
+                    
+                    <li class="nav-item me-2">
+                        <a class="nav-link text-white" href="{{ url_for('configuracion.lista_materias') }}">
+                            <i class="bi bi-book-half text-warning me-1"></i> Materias
+                        </a>
+                    </li>
+
                     <li class="nav-item me-2">
                         <a class="nav-link text-white" href="{{ url_for('gestion.panel_operativo') }}">
                             <i class="bi bi-house-door-fill text-primary me-1"></i> Panel Operativo
                         </a>
                     </li>
+
                     <li class="nav-item">
                         <a class="nav-link text-white" href="{{ url_for('reportes.selector') }}">
                             <i class="bi bi-file-earmark-spreadsheet-fill text-success me-1"></i> Reportes y Notas
                         </a>
                     </li>
+
                 </ul>
                 {% endif %}
 
-                <ul
-                    class="navbar-nav ms-auto align-items-lg-center border-top border-secondary pt-3 pt-lg-0 mt-3 mt-lg-0 border-lg-0">
+                <ul class="navbar-nav ms-auto align-items-lg-center border-top border-secondary pt-3 pt-lg-0 mt-3 mt-lg-0 border-lg-0">
                     {% if current_user.is_authenticated %}
+                    
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 me-3" href="#">
+                        <a class="nav-link text-white-50 me-3" href="#" title="Mi Perfil">
                             <i class="bi bi-person-circle"></i> {{ current_user.nombres }}
                         </a>
                     </li>
+                    
                     <li class="nav-item mt-2 mt-lg-0">
                         <a class="btn btn-outline-danger btn-sm w-100" href="{{ url_for('auth.logout') }}">
                             <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
                         </a>
                     </li>
+                    
                     {% else %}
                     <li class="nav-item">
                         <a class="btn btn-primary btn-sm w-100 px-4" href="{{ url_for('auth.login') }}">
@@ -109,6 +120,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
 </body>
 
 </html>

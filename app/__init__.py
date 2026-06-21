@@ -34,4 +34,7 @@ def create_app(config_class=Config):
         from app.reportes import reportes_bp
         app.register_blueprint(reportes_bp)
 
+        from app.configuracion import configuracion_bp
+        app.register_blueprint(configuracion_bp, url_prefix='/configuracion')
+
     return app
