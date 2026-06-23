@@ -31,9 +31,9 @@
             placeholder="Buscar por apellido, nombre, C.I. o R.U....">
     </div>
 </div>
-
-<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-    <div class="card-body p-0">
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-transparent shadow-none">
+    
+    <div class="d-none d-md-block shadow-sm rounded-4 bg-white mb-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
@@ -50,102 +50,40 @@
                 <tbody>
                     {% if inscripciones %}
                     {% for inscripcion in inscripciones %}
-                    <tr class="fila-estudiante">
+                    <tr class="fila-estudiante-pc">
                         <td class="ps-4 text-muted fw-bold">{{ loop.index }}</td>
-                        <td class="fw-bold text-dark">{{ inscripcion.estudiante.apellidos }}</td>
-                        <td class="fw-medium text-secondary">{{ inscripcion.estudiante.nombres }}</td>
-                        <td><code>{{ inscripcion.estudiante.ci }}</code></td>
+                        <td class="fw-bold text-dark search-target">{{ inscripcion.estudiante.apellidos }}</td>
+                        <td class="fw-medium text-secondary search-target">{{ inscripcion.estudiante.nombres }}</td>
+                        <td class="search-target"><code>{{ inscripcion.estudiante.ci }}</code></td>
                         <td>
                             {% if inscripcion.estudiante.ru %}
-                            <span class="badge bg-light text-dark border">{{ inscripcion.estudiante.ru }}</span>
+                            <span class="badge bg-light text-dark border search-target">{{ inscripcion.estudiante.ru }}</span>
                             {% else %}
-                            <span
-                                class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle">Pendiente</span>
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle">Pendiente</span>
                             {% endif %}
                         </td>
                         <td class="text-muted small">{{ inscripcion.fecha_inscripcion.strftime('%d-%m-%Y') }}</td>
                         <td class="text-end pe-4">
                             <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal"
-                                data-bs-target="#editarEstudianteModal{{ inscripcion.estudiante.id }}"
-                                title="Editar Datos">
+                                data-bs-target="#editarEstudianteModal{{ inscripcion.estudiante.id }}" title="Editar Datos">
                                 <i class="bi bi-pencil-square"></i>
                             </button>
 
-                            <form
-                                action="{{ url_for('gestion.restablecer_credenciales', estudiante_id=inscripcion.estudiante.id) }}"
+                            <form action="{{ url_for('gestion.restablecer_credenciales', estudiante_id=inscripcion.estudiante.id) }}"
                                 method="POST" class="d-inline me-1">
-                                <button type="submit" class="btn btn-sm btn-warning shadow-sm"
-                                    title="Restablecer Contraseña"
+                                <button type="submit" class="btn btn-sm btn-warning shadow-sm" title="Restablecer Contraseña"
                                     onclick="return confirm('¿Estás seguro de restablecer el usuario y contraseña de este estudiante?\n\nAmbos volverán a ser su número de C.I. ({{ inscripcion.estudiante.ci }})');">
                                     <i class="bi bi-key-fill text-dark"></i>
                                 </button>
                             </form>
 
-                            <form action="{{ url_for('gestion.eliminar_inscripcion', id=inscripcion.id) }}"
-                                method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm"
-                                    title="Dar de baja"
+                            <form action="{{ url_for('gestion.eliminar_inscripcion', id=inscripcion.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" title="Dar de baja"
                                     onclick="return confirm('¿Estás seguro de dar de baja a este estudiante del paralelo?');">
                                     <i class="bi bi-person-x"></i>
                                 </button>
                             </form>
                         </td>
-
-                        <div class="modal fade text-start" id="editarEstudianteModal{{ inscripcion.estudiante.id }}"
-                            tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 rounded-4 shadow">
-                                    <div class="modal-header bg-light rounded-top-4 py-3">
-                                        <h5 class="modal-title fw-bold text-dark"><i
-                                                class="bi bi-person-gear text-secondary me-2"></i>Editar Estudiante</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <form method="POST"
-                                        action="{{ url_for('gestion.editar_estudiante', id=inscripcion.estudiante.id) }}">
-                                        <input type="hidden" name="paralelo_id" value="{{ paralelo.id }}">
-
-                                        <div class="modal-body p-4">
-                                            <div class="row g-3 mb-3">
-                                                <div class="col-md-6">
-                                                    <label class="form-label text-muted fw-semibold text-sm">Apellidos
-                                                        *</label>
-                                                    <input type="text" class="form-control" name="apellidos"
-                                                        value="{{ inscripcion.estudiante.apellidos }}" required>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label text-muted fw-semibold text-sm">Nombres
-                                                        *</label>
-                                                    <input type="text" class="form-control" name="nombres"
-                                                        value="{{ inscripcion.estudiante.nombres }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <label class="form-label text-muted fw-semibold text-sm">C.I.
-                                                        *</label>
-                                                    <input type="text" class="form-control" name="ci"
-                                                        value="{{ inscripcion.estudiante.ci }}" pattern="[0-9]+"
-                                                        title="Solo ingresa números, sin letras de expedición ni espacios"
-                                                        required>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label
-                                                        class="form-label text-muted fw-semibold text-sm">R.U.</label>
-                                                    <input type="text" class="form-control" name="ru"
-                                                        value="{{ inscripcion.estudiante.ru or '' }}" pattern="[0-9]*"
-                                                        title="Solo ingresa números">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer bg-light py-3">
-                                            <button type="button" class="btn btn-outline-secondary"
-                                                data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-success fw-bold">Actualizar</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
                     </tr>
                     {% endfor %}
                     {% else %}
@@ -153,8 +91,7 @@
                         <td colspan="7" class="text-center py-5 text-muted">
                             <i class="bi bi-person-bounding-box display-6 d-block mb-3 text-secondary opacity-50"></i>
                             <h5>No hay estudiantes inscritos</h5>
-                            <p class="text-sm">Comparte el código de inscripción <strong>{{ paralelo.codigo_inscripcion
-                                    or 'N/A' }}</strong> o inscribe alumnos manualmente.</p>
+                            <p class="text-sm">Comparte el código de inscripción <strong>{{ paralelo.codigo_inscripcion or 'N/A' }}</strong> o inscribe alumnos manualmente.</p>
                         </td>
                     </tr>
                     {% endif %}
@@ -162,7 +99,113 @@
             </table>
         </div>
     </div>
+
+    <div class="d-block d-md-none mb-4">
+        <div class="row g-3">
+            {% if inscripciones %}
+            {% for inscripcion in inscripciones %}
+            <div class="col-12 fila-estudiante-movil">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark text-uppercase search-target">
+                                    <span class="text-muted me-1 fs-6">#{{ loop.index }}</span>
+                                    {{ inscripcion.estudiante.apellidos }}
+                                </h6>
+                                <div class="text-secondary text-sm mb-1 search-target">{{ inscripcion.estudiante.nombres }}</div>
+                            </div>
+                            <span class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-calendar3 me-1"></i>{{ inscripcion.fecha_inscripcion.strftime('%d-%m-%y') }}</span>
+                        </div>
+                        
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-light text-dark border search-target"><i class="bi bi-person-vcard me-1 text-muted"></i>{{ inscripcion.estudiante.ci }}</span>
+                            {% if inscripcion.estudiante.ru %}
+                            <span class="badge bg-light text-dark border search-target"><i class="bi bi-building me-1 text-muted"></i>{{ inscripcion.estudiante.ru }}</span>
+                            {% else %}
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle">Sin R.U.</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-2 border-top pt-3">
+                            <button type="button" class="btn btn-outline-secondary flex-fill shadow-sm btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#editarEstudianteModal{{ inscripcion.estudiante.id }}">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </button>
+                            
+                            <form action="{{ url_for('gestion.restablecer_credenciales', estudiante_id=inscripcion.estudiante.id) }}" method="POST" class="flex-fill d-flex">
+                                <button type="submit" class="btn btn-warning flex-fill shadow-sm text-dark btn-sm"
+                                    onclick="return confirm('¿Restablecer el usuario y contraseña a su número de C.I.?');">
+                                    <i class="bi bi-key-fill"></i> Reset
+                                </button>
+                            </form>
+                            
+                            <form action="{{ url_for('gestion.eliminar_inscripcion', id=inscripcion.id) }}" method="POST" class="d-flex">
+                                <button type="submit" class="btn btn-outline-danger shadow-sm btn-sm px-3"
+                                    onclick="return confirm('¿Dar de baja?');">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="col-12 text-center py-5 text-muted bg-white rounded-4 shadow-sm">
+                <i class="bi bi-person-bounding-box display-6 d-block mb-3 text-secondary opacity-50"></i>
+                <h5>No hay estudiantes inscritos</h5>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div> {% if inscripciones %}
+{% for inscripcion in inscripciones %}
+<div class="modal fade text-start" id="editarEstudianteModal{{ inscripcion.estudiante.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-light rounded-top-4 py-3">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-person-gear text-secondary me-2"></i>Editar Estudiante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('gestion.editar_estudiante', id=inscripcion.estudiante.id) }}">
+                <input type="hidden" name="paralelo_id" value="{{ paralelo.id }}">
+
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold text-sm">Apellidos *</label>
+                            <input type="text" class="form-control" name="apellidos" value="{{ inscripcion.estudiante.apellidos }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold text-sm">Nombres *</label>
+                            <input type="text" class="form-control" name="nombres" value="{{ inscripcion.estudiante.nombres }}" required>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold text-sm">C.I. *</label>
+                            <input type="text" class="form-control" name="ci" value="{{ inscripcion.estudiante.ci }}" pattern="[0-9]+"
+                                title="Solo ingresa números, sin letras de expedición ni espacios" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold text-sm">R.U.</label>
+                            <input type="text" class="form-control" name="ru" value="{{ inscripcion.estudiante.ru or '' }}" pattern="[0-9]*"
+                                title="Solo ingresa números">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-3">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success fw-bold">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+{% endfor %}
+{% endif %}
 
 <div class="modal fade" id="inscribirEstudianteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -220,18 +263,37 @@
 
 {% block scripts %}
 <script>
+    // --- BUSCADOR HÍBRIDO (PC Y MÓVIL) ---
     document.getElementById('buscadorEstudiantesLista').addEventListener('keyup', function () {
         let filtro = this.value.toLowerCase().trim();
-        let filas = document.querySelectorAll('.fila-estudiante');
+        
+        // Buscamos en ambas vistas
+        let filasPC = document.querySelectorAll('.fila-estudiante-pc');
+        let filasMovil = document.querySelectorAll('.fila-estudiante-movil');
 
-        filas.forEach(function (fila) {
-            let textoFila = fila.textContent.toLowerCase();
-            if (textoFila.includes(filtro)) {
-                fila.style.display = '';
-            } else {
-                fila.style.display = 'none';
-            }
-        });
+        // Función auxiliar para filtrar
+        function aplicarFiltro(elementos) {
+            elementos.forEach(function (elemento) {
+                // Buscamos solo en los objetivos marcados para evitar conflictos con HTML oculto o modales
+                let targets = elemento.querySelectorAll('.search-target');
+                let match = false;
+                
+                targets.forEach(function(target) {
+                    if (target.textContent.toLowerCase().includes(filtro)) {
+                        match = true;
+                    }
+                });
+                
+                if (match || filtro === '') {
+                    elemento.style.display = '';
+                } else {
+                    elemento.style.display = 'none';
+                }
+            });
+        }
+
+        aplicarFiltro(filasPC);
+        aplicarFiltro(filasMovil);
     });
 </script>
 

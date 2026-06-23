@@ -69,6 +69,10 @@ def matriz_notas(id):
                 
             fila['notas_regulares'][param.id] = round(nota_parametro, 2)
             fila['nota_semestre'] += nota_parametro
+            
+
+        #if fila['nota_semestre']>10:
+        #    fila['nota_semestre']==10
 
         fila['nota_semestre'] = round(fila['nota_semestre'], 2)
 

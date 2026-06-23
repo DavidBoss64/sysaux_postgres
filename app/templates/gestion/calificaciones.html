@@ -9,8 +9,7 @@
         <i class="bi bi-arrow-left"></i> Volver a Actividades
     </a>
     <h2 class="fw-bold text-dark"><i class="bi bi-ui-checks text-success me-2"></i>Calificar Actividad</h2>
-    <h5 class="text-muted">{{ actividad.titulo }} <span class="badge bg-primary ms-2">Máximo: {{
-            actividad.parametro.ponderacion }} pts</span></h5>
+    <h5 class="text-muted">{{ actividad.titulo }} <span class="badge bg-primary ms-2">Máximo: {{ actividad.parametro.ponderacion }} pts</span></h5>
     <p class="text-sm mb-0">Paralelo: <strong>{{ paralelo.nombre }}</strong> ({{ paralelo.materia.nombre }})</p>
 </div>
 
@@ -24,10 +23,11 @@
     </div>
 </div>
 
-<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-transparent border-0 shadow-none">
     <form method="POST" action="{{ url_for('gestion.calificar_actividad', id=actividad.id) }}">
         <div class="card-body p-0">
-            <div class="table-responsive">
+            
+            <div class="table-responsive d-none d-md-block shadow-sm rounded-4 bg-white mb-4">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -44,9 +44,9 @@
                         {% for inscripcion in inscripciones %}
                         <tr class="fila-estudiante">
                             <td class="ps-4 text-muted fw-bold">{{ loop.index }}</td>
-                            <td class="fw-bold text-dark">{{ inscripcion.estudiante.apellidos }}</td>
-                            <td class="fw-medium text-secondary">{{ inscripcion.estudiante.nombres }}</td>
-                            <td><code>{{ inscripcion.estudiante.ci }}</code></td>
+                            <td class="fw-bold text-dark search-target">{{ inscripcion.estudiante.apellidos }}</td>
+                            <td class="fw-medium text-secondary search-target">{{ inscripcion.estudiante.nombres }}</td>
+                            <td class="search-target"><code>{{ inscripcion.estudiante.ci }}</code></td>
                             <td>
                                 {% if inscripcion.estudiante.ru %}
                                 <span class="badge bg-light text-dark border">{{ inscripcion.estudiante.ru }}</span>
@@ -59,27 +59,21 @@
                                     {% if tipo_parametro == 'asistencia' %}
                                     <div class="form-check form-switch mb-0 me-2">
                                         {% set tiene_asistencia = notas.get(inscripcion.estudiante.id, 0) %}
-
                                         <input class="form-check-input fs-4 cursor-pointer shadow-none border-success"
                                             type="checkbox" role="switch"
                                             name="asistencia_{{ inscripcion.estudiante.id }}"
-                                            value="{{ actividad.parametro.ponderacion }}" {% if tiene_asistencia|float>
-                                        0 %}checked{% endif %}>
+                                            value="{{ actividad.parametro.ponderacion }}" {% if tiene_asistencia|float > 0 %}checked{% endif %}>
                                     </div>
                                     {% else %}
                                     <div class="input-group input-group-sm me-2" style="width: auto;">
-                                        <input type="number" step="0.1" min="0"
-                                            max="{{ actividad.parametro.ponderacion }}"
+                                        <input type="number" step="0.1" min="0" max="{{ actividad.parametro.ponderacion }}"
                                             class="form-control form-control-sm text-end shadow-none"
                                             style="max-width: 90px;" name="nota_{{ inscripcion.estudiante.id }}"
                                             value="{{ notas.get(inscripcion.estudiante.id, '') }}" placeholder="0.0">
-                                        <span class="input-group-text bg-light text-muted">/ {{
-                                            actividad.parametro.ponderacion }}</span>
+                                        <span class="input-group-text bg-light text-muted">/ {{ actividad.parametro.ponderacion }}</span>
                                     </div>
                                     {% endif %}
-
-                                    <span id="icono_{{ inscripcion.estudiante.id }}"
-                                        style="opacity: 0; transition: opacity 0.3s ease; width: 24px; text-align: center;">
+                                    <span id="icono_pc_{{ inscripcion.estudiante.id }}" class="ajax-icon" style="opacity: 0; transition: opacity 0.3s ease; width: 24px; text-align: center;">
                                         <i class="bi bi-check-circle-fill text-success fs-5"></i>
                                     </span>
                                 </div>
@@ -91,19 +85,95 @@
                             <td colspan="6" class="text-center py-5 text-muted">
                                 <i class="bi bi-person-x display-6 d-block mb-3 text-secondary opacity-50"></i>
                                 <h5>No hay estudiantes inscritos</h5>
-                                <p class="text-sm">Inscribe alumnos en el paralelo para poder calificarlos.</p>
                             </td>
                         </tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
+
+            <div class="d-block d-md-none mb-5 pb-4">
+                <div class="row g-3">
+                    {% if inscripciones %}
+                    {% for inscripcion in inscripciones %}
+                    <div class="col-12 fila-estudiante">
+                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                                <div class="me-2 flex-grow-1">
+                                    <h6 class="mb-0 fw-bold text-dark text-uppercase search-target">
+                                        <span class="text-muted me-1 fs-6">#{{ loop.index }}</span>
+                                        {{ inscripcion.estudiante.apellidos }}
+                                    </h6>
+                                    
+                                    <div class="text-secondary text-sm mb-2 search-target">{{ inscripcion.estudiante.nombres }}</div>
+                                    
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span class="badge bg-light text-dark border search-target" title="Carnet de Identidad">
+                                            <i class="bi bi-person-vcard me-1 text-muted"></i>{{ inscripcion.estudiante.ci }}
+                                        </span>
+                                        {% if inscripcion.estudiante.ru %}
+                                        <span class="badge bg-light text-dark border search-target" title="Registro Universitario">
+                                            <i class="bi bi-building me-1 text-muted"></i>{{ inscripcion.estudiante.ru }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-light text-muted border border-light" title="Sin R.U.">
+                                            Sin R.U.
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex flex-column align-items-end" style="min-width: 90px;">
+                                    <div class="mb-1" style="height: 20px;">
+                                        <span id="icono_movil_{{ inscripcion.estudiante.id }}" class="ajax-icon" style="opacity: 0; transition: opacity 0.3s ease;">
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        </span>
+                                    </div>
+                                    
+                                    {% if tipo_parametro == 'asistencia' %}
+                                        <div class="form-check form-switch mb-0">
+                                            {% set tiene_asistencia = notas.get(inscripcion.estudiante.id, 0) %}
+                                            <input class="form-check-input fs-2 shadow-sm cursor-pointer border-success" type="checkbox" role="switch"
+                                                name="asistencia_{{ inscripcion.estudiante.id }}" value="{{ actividad.parametro.ponderacion }}" 
+                                                {% if tiene_asistencia|float > 0 %}checked{% endif %}>
+                                        </div>
+                                    {% else %}
+                                        <div class="input-group shadow-sm rounded-3">
+                                            <input type="number" step="0.1" max="{{ actividad.parametro.ponderacion }}" min="0" 
+                                                class="form-control text-center fw-bold text-primary border-primary bg-light px-1" 
+                                                name="nota_{{ inscripcion.estudiante.id }}" 
+                                                value="{{ notas.get(inscripcion.estudiante.id, '') }}" 
+                                                placeholder="0.0" autocomplete="off" inputmode="decimal">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                        <div class="col-12 text-center py-5 text-muted bg-white rounded-4 shadow-sm">
+                            <i class="bi bi-person-x display-6 d-block mb-3 text-secondary opacity-50"></i>
+                            <h5>No hay estudiantes inscritos</h5>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
         </div>
-        <div class="card-footer bg-light border-top-0 py-3 text-end rounded-bottom-4">
-            <button type="submit" class="btn btn-success fw-bold px-4 shadow-sm" {% if not inscripciones %}disabled{%
-                endif %}>
+        
+        <div class="d-none d-md-block bg-white shadow-sm border-top py-3 text-end rounded-4 px-4 mt-3">
+            <button type="submit" class="btn btn-success fw-bold px-4 shadow-sm" {% if not inscripciones %}disabled{% endif %}>
                 <i class="bi bi-floppy me-2"></i>Guardar (Respaldo)
             </button>
+        </div>
+        
+        <div class="d-block d-md-none position-fixed bottom-0 start-0 w-100 bg-white p-3 border-top shadow-lg" style="z-index: 1000;">
+            <div class="container d-flex justify-content-end">
+                <button type="submit" class="btn btn-success fw-bold shadow px-4 w-100 rounded-pill" {% if not inscripciones %}disabled{% endif %}>
+                    <i class="bi bi-floppy me-2"></i>Guardar Cambios
+                </button>
+            </div>
         </div>
     </form>
 </div>
@@ -111,14 +181,22 @@
 
 {% block scripts %}
 <script>
-    // --- BUSCADOR ---
+    // --- BUSCADOR OPTIMIZADO (Para buscar en Tarjetas y Tablas) ---
     document.getElementById('buscadorEstudiante').addEventListener('keyup', function () {
         let filtro = this.value.toLowerCase().trim();
         let filas = document.querySelectorAll('.fila-estudiante');
 
         filas.forEach(function (fila) {
-            let textoFila = fila.textContent.toLowerCase();
-            if (textoFila.includes(filtro)) {
+            // Solo busca dentro de los elementos con clase 'search-target' para no buscar en código o HTML oculto
+            let targets = fila.querySelectorAll('.search-target');
+            let match = false;
+            targets.forEach(function(target) {
+                if (target.textContent.toLowerCase().includes(filtro)) {
+                    match = true;
+                }
+            });
+            
+            if (match || filtro === '') {
                 fila.style.display = '';
             } else {
                 fila.style.display = 'none';
@@ -126,7 +204,7 @@
         });
     });
 
-    // --- AUTOGUARDADO EN TIEMPO REAL CON ÍCONO MÁGICO ---
+    // --- AUTOGUARDADO EN TIEMPO REAL CON ÍCONO MÁGICO (ADAPTADO A MÓVIL Y PC) ---
     document.addEventListener('DOMContentLoaded', function () {
         const inputsCalificacion = document.querySelectorAll('input[type="number"], input[type="checkbox"]');
 
@@ -138,63 +216,62 @@
                 let valor = this.type === 'checkbox' ? (this.checked ? this.value : 0) : this.value;
                 const actividadId = "{{ actividad.id }}";
 
-                // Bordes de "Procesando"
                 this.style.borderColor = '#ffc107';
 
                 fetch(`/gestion/actividad/${actividadId}/calificar_ajax`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        estudiante_id: estudianteId,
-                        valor: valor
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estudiante_id: estudianteId, valor: valor })
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Seleccionamos el ícono mágico de este estudiante en específico
-                        const spanIcono = document.getElementById('icono_' + estudianteId);
+                .then(response => response.json())
+                .then(data => {
+                    // Seleccionamos AMBOS íconos (el de PC y el de Móvil) para sincronizar la UI
+                    const spanIconoPC = document.getElementById('icono_pc_' + estudianteId);
+                    const spanIconoMovil = document.getElementById('icono_movil_' + estudianteId);
 
-                        if (data.success) {
-                            this.style.borderColor = '#198754';
+                    if (data.success) {
+                        this.style.borderColor = '#198754';
 
-                            // Mostramos el Check Verde ✅
-                            if (spanIcono) {
-                                spanIcono.innerHTML = '<i class="bi bi-check-circle-fill text-success fs-5"></i>';
-                                spanIcono.style.opacity = '1';
+                        const checkHTML = '<i class="bi bi-check-circle-fill text-success fs-5"></i>';
+                        if (spanIconoPC) { spanIconoPC.innerHTML = checkHTML; spanIconoPC.style.opacity = '1'; }
+                        if (spanIconoMovil) { spanIconoMovil.innerHTML = checkHTML; spanIconoMovil.style.opacity = '1'; }
+
+                        setTimeout(() => {
+                            this.style.borderColor = '';
+                            if (spanIconoPC) spanIconoPC.style.opacity = '0';
+                            if (spanIconoMovil) spanIconoMovil.style.opacity = '0';
+                        }, 1500);
+
+                        // Si cambias en móvil, actualiza el input de PC (y viceversa) para no desincronizar el DOM
+                        const inputsRelacionados = document.querySelectorAll(`input[name="${this.getAttribute('name')}"]`);
+                        inputsRelacionados.forEach(inp => {
+                            if (inp !== this) {
+                                if(inp.type === 'checkbox') inp.checked = this.checked;
+                                else if(inp.type === 'number') inp.value = data.puntaje_final !== undefined ? data.puntaje_final : this.value;
                             }
-
-                            // Lo desvanecemos después de 1.5 segundos
-                            setTimeout(() => {
-                                this.style.borderColor = '';
-                                if (spanIcono) spanIcono.style.opacity = '0';
-                            }, 1500);
-
-                            if (data.puntaje_final !== undefined && this.type === 'number') {
-                                this.value = data.puntaje_final;
-                            }
-                        } else {
-                            this.style.borderColor = '#dc3545';
-
-                            // Mostramos la Cruz Roja ❌
-                            if (spanIcono) {
-                                spanIcono.innerHTML = '<i class="bi bi-x-circle-fill text-danger fs-5"></i>';
-                                spanIcono.style.opacity = '1';
-                            }
-                            alert('Error al guardar: ' + data.message);
+                        });
+                        
+                        if (data.puntaje_final !== undefined && this.type === 'number') {
+                            this.value = data.puntaje_final;
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
+
+                    } else {
                         this.style.borderColor = '#dc3545';
-
-                        const spanIcono = document.getElementById('icono_' + estudianteId);
-                        if (spanIcono) {
-                            spanIcono.innerHTML = '<i class="bi bi-x-circle-fill text-danger fs-5"></i>';
-                            spanIcono.style.opacity = '1';
-                        }
-                    });
+                        const errorHTML = '<i class="bi bi-x-circle-fill text-danger fs-5"></i>';
+                        if (spanIconoPC) { spanIconoPC.innerHTML = errorHTML; spanIconoPC.style.opacity = '1'; }
+                        if (spanIconoMovil) { spanIconoMovil.innerHTML = errorHTML; spanIconoMovil.style.opacity = '1'; }
+                        alert('Error al guardar: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    this.style.borderColor = '#dc3545';
+                    const errorHTML = '<i class="bi bi-x-circle-fill text-danger fs-5"></i>';
+                    const spanIconoPC = document.getElementById('icono_pc_' + estudianteId);
+                    const spanIconoMovil = document.getElementById('icono_movil_' + estudianteId);
+                    if (spanIconoPC) { spanIconoPC.innerHTML = errorHTML; spanIconoPC.style.opacity = '1'; }
+                    if (spanIconoMovil) { spanIconoMovil.innerHTML = errorHTML; spanIconoMovil.style.opacity = '1'; }
+                });
             });
         });
     });

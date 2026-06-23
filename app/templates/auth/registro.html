@@ -33,16 +33,6 @@
                         class="bi bi-1-circle-fill text-primary me-1"></i> Datos Personales</h6>
                 <div class="row g-3 mb-4">
                     <div class="col-12 col-md-6">
-                        <label class="form-label text-sm fw-semibold text-muted mb-1">Apellidos *</label>
-                        <div class="input-group shadow-sm rounded-3 overflow-hidden">
-                            <span class="input-group-text bg-light border-end-0 text-secondary"><i
-                                    class="bi bi-person-badge"></i></span>
-                            <input type="text" name="apellidos"
-                                class="form-control bg-light border-start-0 shadow-none text-uppercase"
-                                value="{{ apellidos | default('') }}" required autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6">
                         <label class="form-label text-sm fw-semibold text-muted mb-1">Nombres *</label>
                         <div class="input-group shadow-sm rounded-3 overflow-hidden">
                             <span class="input-group-text bg-light border-end-0 text-secondary"><i
@@ -52,6 +42,17 @@
                                 value="{{ nombres | default('') }}" required autocomplete="off">
                         </div>
                     </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-sm fw-semibold text-muted mb-1">Apellidos *</label>
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                            <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                    class="bi bi-person-badge"></i></span>
+                            <input type="text" name="apellidos"
+                                class="form-control bg-light border-start-0 shadow-none text-uppercase"
+                                value="{{ apellidos | default('') }}" required autocomplete="off">
+                        </div>
+                    </div>
+                    
                     <!-- C.I. (Solo Números) -->
                     <div class="col-12 col-md-6">
                         <label class="form-label text-sm fw-semibold text-muted mb-1">Carnet (C.I.) *</label>
