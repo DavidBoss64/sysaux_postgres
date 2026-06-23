@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from . import gestion_bp
 from ..models import Actividad, Inscripcion, Calificacion
 from ..extensions import db
+from flask import jsonify
 
 @gestion_bp.route('/actividad/<int:id>/calificar', methods=['GET', 'POST'])
 @login_required
@@ -60,8 +61,53 @@ def calificar_actividad(id):
         return redirect(url_for('gestion.calificar_actividad', id=actividad.id))
 
     return render_template('gestion/calificaciones.html', 
-                           actividad=actividad, 
-                           paralelo=paralelo, 
-                           inscripciones=inscripciones, 
-                           notas=notas_actuales,
-                           tipo_parametro=tipo_parametro)
+                        actividad=actividad, 
+                        paralelo=paralelo, 
+                        inscripciones=inscripciones, 
+                        notas=notas_actuales,
+                        tipo_parametro=tipo_parametro)
+
+# --- RUTA PARA EL AUTOGUARDADO EN TIEMPO REAL (AJAX) ---
+@gestion_bp.route('/actividad/<int:id>/calificar_ajax', methods=['POST'])
+@login_required
+def calificar_actividad_ajax(id):
+    actividad = Actividad.query.get_or_404(id)
+    
+    # Seguridad básica
+    if actividad.parametro.paralelo.auxiliar_id != current_user.id:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+
+    # Recibimos los datos enviados por Javascript
+    data = request.get_json()
+    estudiante_id = data.get('estudiante_id')
+    valor_input = data.get('valor') # Puede ser un número o un booleano (para asistencia)
+
+    # Buscamos si ya existe una calificación previa
+    calificacion = Calificacion.query.filter_by(actividad_id=actividad.id, estudiante_id=estudiante_id).first()
+
+    # Si el valor está vacío, eliminamos la nota (si existía)
+    if valor_input == '' or valor_input is None:
+        if calificacion:
+            db.session.delete(calificacion)
+            db.session.commit()
+        return jsonify({'success': True, 'accion': 'eliminado'})
+
+    # Lógica para guardar o actualizar
+    try:
+        puntaje = float(valor_input)
+        # Validamos límites
+        max_pts = actividad.parametro.ponderacion
+        if puntaje > max_pts: puntaje = max_pts
+        if puntaje < 0: puntaje = 0
+
+        if calificacion:
+            calificacion.puntaje = puntaje
+        else:
+            nueva_nota = Calificacion(actividad_id=actividad.id, estudiante_id=estudiante_id, puntaje=puntaje)
+            db.session.add(nueva_nota)
+            
+        db.session.commit()
+        return jsonify({'success': True, 'accion': 'guardado', 'puntaje_final': puntaje})
+
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Valor inválido'}), 400 

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Rendimiento - SysAux{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('estudiante.dashboard') }}" class="btn btn-outline-secondary btn-sm mb-3 shadow-sm">
+        <i class="bi bi-arrow-left"></i> Volver a Mis Materias
+    </a>
+    <h3 class="fw-bold text-dark mb-0">{{ paralelo.materia.nombre }}</h3>
+    <p class="text-muted">Paralelo {{ paralelo.nombre }} | Auxiliar: {{ paralelo.auxiliar.nombres }}</p>
+</div>
+
+<div class="card bg-dark text-white border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="text-white-50 text-uppercase fw-bold mb-1 small">Acumulado del Semestre</h6>
+            <h2 class="fw-bolder mb-0 display-5">{{ nota_acumulada }} <span class="fs-5 text-white-50 fw-normal">/ {{ paralelo.nota_maxima }} pts</span></h2>
+        </div>
+        <div class="bg-white bg-opacity-10 rounded-circle p-3">
+            <i class="bi bi-trophy-fill fs-1 text-warning"></i>
+        </div>
+    </div>
+</div>
+
+{% if actividad_abierta %}
+    {% if asistencia_marcada %}
+        <div class="alert border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center p-4" style="background-color: #d1e7dd; border-left: 6px solid #0f5132 !important;">
+            <i class="bi bi-check-circle-fill me-4" style="font-size: 3.5rem; color: #0f5132;"></i>
+            <div>
+                <h3 class="fw-bolder mb-1" style="color: #0f5132;">¡Asistencia Confirmada!</h3>
+                <p class="mb-0 fs-5" style="color: #146c43;">El sistema registró tu presencia en <strong>"{{ actividad_abierta.titulo }}"</strong> exitosamente.</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="card border-0 rounded-4 shadow-sm mb-4 border-start border-primary border-5">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-upc-scan text-primary me-2"></i>Marcar Asistencia</h5>
+                    <span class="badge bg-danger animate-pulse py-2 px-3 shadow-sm rounded-pill"><i class="bi bi-record-circle me-1"></i>Asistencia Abierta</span>
+                </div>
+                <p class="text-muted small">El auxiliar ha habilitado el registro para: <strong>{{ actividad_abierta.titulo }}</strong></p>
+                <form action="{{ url_for('estudiante.marcar_asistencia', paralelo_id=paralelo.id) }}" method="POST">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control text-uppercase shadow-none bg-light fw-bold" name="codigo_asistencia" placeholder="Escribe el código aquí..." required autocomplete="off">
+                        <button class="btn btn-primary fw-bold px-4 shadow-sm" type="submit">Registrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+
+<style>
+    .animate-pulse {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+</style>
+
+<h5 class="fw-bold text-dark mb-3 mt-4"><i class="bi bi-card-checklist text-secondary me-2"></i>Desglose de Calificaciones</h5>
+
+<div class="accordion shadow-sm rounded-4 overflow-hidden mb-5 border-0" id="acordeonNotas">
+    {% for param in parametros %}
+    <div class="accordion-item border-0 border-bottom">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed fw-bold text-dark bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#param_{{ param.id }}">
+                <div class="d-flex justify-content-between w-100 pe-3 align-items-center">
+                    <span>
+                        {% if param.tipo == 'asistencia' %}<i class="bi bi-person-check-fill text-success me-2"></i>
+                        {% elif param.tipo == 'liberacion' %}<i class="bi bi-shield-lock-fill text-danger me-2"></i>
+                        {% else %}<i class="bi bi-journal-text text-primary me-2"></i>{% endif %}
+                        {{ param.nombre_parametro }}
+                    </span>
+                    
+                    <span class="badge bg-light text-dark border p-2">
+                        {% if param.tipo != 'liberacion' %}
+                            <span class="text-primary">{{ subtotales[param.id] }}</span> / {{ param.ponderacion }} pts
+                        {% else %}
+                            Máx {{ param.ponderacion }} pts
+                        {% endif %}
+                    </span>
+                </div>
+            </button>
+        </h2>
+        <div id="param_{{ param.id }}" class="accordion-collapse collapse bg-light" data-bs-parent="#acordeonNotas">
+            <div class="accordion-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% if param.actividades %}
+                        {% for act in param.actividades %}
+                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <h6 class="mb-0 fw-semibold text-dark">{{ act.titulo }}</h6>
+                                <small class="text-muted">{{ act.fecha.strftime('%d/%m/%Y') }}</small>
+                            </div>
+                            
+                            {% if act.id in mis_notas %}
+                                {% if param.tipo == 'asistencia' %}
+                                    {% if mis_notas[act.id] > 0 %}
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2"><i class="bi bi-check-lg me-1"></i> Presente</span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2"><i class="bi bi-x-lg me-1"></i> Ausente</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="fs-5 fw-bold text-success">{{ mis_notas[act.id] }} <span class="fs-6 text-muted fw-normal">/ {{ param.ponderacion }}</span></span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border px-3 py-2"><i class="bi bi-clock-history me-1"></i> Pendiente</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item bg-transparent text-center py-4 text-muted small">
+                            Aún no hay actividades registradas en esta categoría.
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

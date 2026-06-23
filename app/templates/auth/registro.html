@@ -1,0 +1,139 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Registro de Estudiante - SysAux{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="max-width: 600px; width: 100%;">
+
+        <div class="bg-primary text-white p-4 text-center position-relative">
+            <i class="bi bi-person-vcard-fill display-4 mb-2 d-block"></i>
+            <h3 class="fw-bold mb-0">Crear Cuenta</h3>
+            <p class="text-white-50 mb-0 small">Portal del Estudiante Universitario</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show text-sm rounded-3 shadow-sm"
+                role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+
+
+            <form method="POST" action="{{ url_for('auth.registro') }}">
+
+                <h6 class="fw-bold text-muted mb-3 border-bottom pb-2"><i
+                        class="bi bi-1-circle-fill text-primary me-1"></i> Datos Personales</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-sm fw-semibold text-muted mb-1">Apellidos *</label>
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                            <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                    class="bi bi-person-badge"></i></span>
+                            <input type="text" name="apellidos"
+                                class="form-control bg-light border-start-0 shadow-none text-uppercase"
+                                value="{{ apellidos | default('') }}" required autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-sm fw-semibold text-muted mb-1">Nombres *</label>
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                            <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                    class="bi bi-person"></i></span>
+                            <input type="text" name="nombres"
+                                class="form-control bg-light border-start-0 shadow-none text-uppercase"
+                                value="{{ nombres | default('') }}" required autocomplete="off">
+                        </div>
+                    </div>
+                    <!-- C.I. (Solo Números) -->
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-sm fw-semibold text-muted mb-1">Carnet (C.I.) *</label>
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                            <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                    class="bi bi-card-heading"></i></span>
+                            <input type="text" name="ci" class="form-control bg-light border-start-0 shadow-none"
+                                placeholder="Ej: 1234567" value="{{ ci | default('') }}" pattern="[0-9]+"
+                                title="Solo ingresa números, sin letras de expedición ni espacios" required
+                                autocomplete="off">
+                        </div>
+                    </div>
+                    <!-- R.U. (Solo Números) -->
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-sm fw-semibold text-muted mb-1">R.U. <span
+                                class="fw-normal text-black-50">(Opcional)</span></label>
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                            <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                    class="bi bi-building"></i></span>
+                            <input type="text" name="ru" class="form-control bg-light border-start-0 shadow-none"
+                                placeholder="Ej: 202612345" value="{{ ru | default('') }}" pattern="[0-9]*"
+                                title="Solo ingresa números" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-muted mb-3 border-bottom pb-2"><i
+                        class="bi bi-2-circle-fill text-primary me-1"></i> Inscripción a Materia</h6>
+                <div class="mb-4">
+                    <label class="form-label text-sm fw-semibold text-muted mb-1">Código de Inscripción *</label>
+                    <div class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-light border-end-0 text-primary"><i
+                                class="bi bi-upc-scan"></i></span>
+                        <input type="text" name="codigo_inscripcion"
+                            class="form-control text-uppercase fw-bold border-start-0 shadow-none text-primary bg-light"
+                            placeholder="Ej: DISCRETA-1A" value="{{ codigo_inscripcion | default('') }}" required
+                            autocomplete="off">
+                    </div>
+                    <div class="form-text text-sm mt-2"><i class="bi bi-info-circle me-1"></i>Este código te lo debe
+                        proporcionar tu Auxiliar de Docencia para poder matricularte.</div>
+                </div>
+
+                <h6 class="fw-bold text-muted mb-3 border-bottom pb-2"><i
+                        class="bi bi-3-circle-fill text-primary me-1"></i> Seguridad</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-sm fw-semibold text-muted mb-1">Contraseña *</label>
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                            <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                    class="bi bi-shield-lock"></i></span>
+                            <input type="password" name="password"
+                                class="form-control bg-light border-start-0 shadow-none" minlength="6"
+                                placeholder="Mínimo 6 caracteres" required>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-sm fw-semibold text-muted mb-1">Confirmar Contraseña *</label>
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                            <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                    class="bi bi-shield-check"></i></span>
+                            <input type="password" name="password_confirm"
+                                class="form-control bg-light border-start-0 shadow-none" minlength="6"
+                                placeholder="Repite la contraseña" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4 pt-2">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm rounded-3 py-2">
+                        Registrarme e Inscribirme <i class="bi bi-arrow-right-circle ms-2"></i>
+                    </button>
+                </div>
+
+                <div class="text-center mt-4 border-top pt-4">
+                    <span class="text-muted small">¿Ya tienes una cuenta en el sistema?</span><br>
+                    <a href="{{ url_for('auth.login') }}"
+                        class="btn btn-outline-secondary btn-sm rounded-pill px-4 mt-2 fw-bold shadow-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

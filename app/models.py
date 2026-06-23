@@ -44,11 +44,14 @@ class Paralelo(db.Model):
     codigo_inscripcion = db.Column(db.String(20), unique=True, nullable=True)
     estado = db.Column(db.Boolean, default=True)
     
-    # --- NUEVO: Límite dinámico (Por defecto 10 pts, pero editable para extras) ---
     nota_maxima = db.Column(db.Float, default=10.0)
+
+
+    auxiliar = db.relationship('Usuario', foreign_keys=[auxiliar_id], backref='paralelos_asignados', lazy=True)
 
     parametros = db.relationship('ParametroEvaluacion', backref='paralelo', lazy=True)
     inscripciones = db.relationship('Inscripcion', backref='paralelo', lazy=True)
+
 
 class Inscripcion(db.Model):
     __tablename__ = 'inscripciones'

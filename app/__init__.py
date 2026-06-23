@@ -44,4 +44,7 @@ def create_app(config_class=Config):
 
         from app.papelera import papelera_bp
         app.register_blueprint(papelera_bp)
+        
+        from app.estudiante import estudiante_bp
+        app.register_blueprint(estudiante_bp)
     return app

@@ -8,31 +8,35 @@
         <i class="bi bi-arrow-left"></i> Volver Atrás
     </button>
     <h2 class="fw-bold text-dark"><i class="bi bi-trash3-fill text-danger me-2"></i>Papelera del Sistema</h2>
-    <p class="text-muted">Centro global de recuperación. Restaura elementos eliminados o destrúyelos definitivamente para liberar espacio.</p>
+    <p class="text-muted">Centro global de recuperación. Restaura elementos eliminados o destrúyelos definitivamente
+        para liberar espacio.</p>
 </div>
 
 <ul class="nav nav-tabs fw-semibold mb-4 border-bottom-0" id="papeleraTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active text-dark bg-white border border-bottom-0 rounded-top-3 shadow-sm" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab">
+        <button class="nav-link active text-dark bg-white border border-bottom-0 rounded-top-3 shadow-sm"
+            id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab">
             <i class="bi bi-journal-check text-primary me-1"></i> Gestión Académica
         </button>
     </li>
     <li class="nav-item ms-2" role="presentation">
-        <button class="nav-link text-muted bg-light border border-bottom-0 rounded-top-3" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">
+        <button class="nav-link text-muted bg-light border border-bottom-0 rounded-top-3" id="config-tab"
+            data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">
             <i class="bi bi-gear-fill text-secondary me-1"></i> Configuración y Staff
         </button>
     </li>
 </ul>
 
 <div class="tab-content" id="papeleraTabsContent">
-    
+
     <div class="tab-pane fade show active" id="gestion" role="tabpanel">
         <div class="row g-4">
-            
+
             <div class="col-12">
                 <div class="card shadow-sm border-0 rounded-4">
                     <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
-                        <h5 class="fw-bold text-dark"><i class="bi bi-folder-x text-warning me-2"></i>Paralelos Archivados</h5>
+                        <h5 class="fw-bold text-dark"><i class="bi bi-folder-x text-warning me-2"></i>Paralelos
+                            Archivados</h5>
                     </div>
                     <div class="card-body p-0">
                         <table class="table table-hover align-middle mb-0">
@@ -50,13 +54,19 @@
                                     <td class="ps-4 text-muted">{{ paralelo.materia.nombre }}</td>
                                     <td class="text-muted"><del>{{ paralelo.nombre }}</del></td>
                                     <td class="text-end pe-4">
-                                        <form action="{{ url_for('papelera.restaurar_paralelo', id=paralelo.id) }}" method="POST" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-success fw-bold" title="Restaurar" onclick="return confirm('¿Restaurar este paralelo?');">
+                                        <form action="{{ url_for('papelera.restaurar_paralelo', id=paralelo.id) }}"
+                                            method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-success fw-bold"
+                                                title="Restaurar"
+                                                onclick="return confirm('¿Restaurar este paralelo?');">
                                                 <i class="bi bi-arrow-counterclockwise"></i> Restaurar
                                             </button>
                                         </form>
-                                        <form action="{{ url_for('papelera.eliminar_paralelo_definitivo', id=paralelo.id) }}" method="POST" class="d-inline ms-1">
-                                            <button type="submit" class="btn btn-sm btn-danger shadow-sm" title="Destruir por completo"
+                                        <form
+                                            action="{{ url_for('papelera.eliminar_paralelo_definitivo', id=paralelo.id) }}"
+                                            method="POST" class="d-inline ms-1">
+                                            <button type="submit" class="btn btn-sm btn-danger shadow-sm"
+                                                title="Destruir por completo"
                                                 onclick="return confirm('⚠️ ADVERTENCIA CRÍTICA:\n\nEstás a punto de eliminar este paralelo para siempre.\nSe borrarán todas las prácticas, asistencias y notas asociadas.\n\nEsta acción NO se puede deshacer. ¿Continuar?');">
                                                 <i class="bi bi-x-octagon-fill"></i> Destruir
                                             </button>
@@ -65,7 +75,10 @@
                                 </tr>
                                 {% endfor %}
                                 {% else %}
-                                <tr><td colspan="3" class="text-center py-4 text-muted small">No hay paralelos en la papelera.</td></tr>
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted small">No hay paralelos en la
+                                        papelera.</td>
+                                </tr>
                                 {% endif %}
                             </tbody>
                         </table>
@@ -76,7 +89,8 @@
             <div class="col-12">
                 <div class="card shadow-sm border-0 rounded-4">
                     <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
-                        <h5 class="fw-bold text-dark"><i class="bi bi-person-x text-info me-2"></i>Inscripciones Dadas de Baja</h5>
+                        <h5 class="fw-bold text-dark"><i class="bi bi-person-x text-info me-2"></i>Inscripciones Dadas
+                            de Baja</h5>
                     </div>
                     <div class="card-body p-0">
                         <table class="table table-hover align-middle mb-0">
@@ -92,20 +106,33 @@
                                 {% if inscripciones %}
                                 {% for insc in inscripciones %}
                                 <tr>
-                                    <td class="ps-4 text-muted">{{ insc.estudiante.apellidos }}, {{ insc.estudiante.nombres }}</td>
+                                    <td class="ps-4 text-muted">{{ insc.estudiante.apellidos }}, {{
+                                        insc.estudiante.nombres }}</td>
                                     <td class="text-muted">{{ insc.estudiante.ci }}</td>
                                     <td><span class="badge bg-secondary">{{ insc.paralelo.nombre }}</span></td>
                                     <td class="text-end pe-4">
-                                        <form action="{{ url_for('papelera.restaurar_inscripcion', id=insc.id) }}" method="POST">
+                                        <form action="{{ url_for('papelera.restaurar_inscripcion', id=insc.id) }}"
+                                            method="POST" class="d-inline">
                                             <button type="submit" class="btn btn-sm btn-outline-success fw-bold">
                                                 <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                                            </button>
+                                        </form>
+                                        <form
+                                            action="{{ url_for('papelera.eliminar_inscripcion_definitiva', id=insc.id) }}"
+                                            method="POST" class="d-inline ms-1">
+                                            <button type="submit" class="btn btn-sm btn-danger shadow-sm"
+                                                onclick="return confirm('¿Destruir definitivamente esta inscripción?');">
+                                                <i class="bi bi-x-octagon-fill"></i> Destruir
                                             </button>
                                         </form>
                                     </td>
                                 </tr>
                                 {% endfor %}
                                 {% else %}
-                                <tr><td colspan="4" class="text-center py-4 text-muted small">No hay alumnos dados de baja.</td></tr>
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted small">No hay alumnos dados de
+                                        baja.</td>
+                                </tr>
                                 {% endif %}
                             </tbody>
                         </table>
@@ -116,7 +143,8 @@
             <div class="col-12">
                 <div class="card shadow-sm border-0 rounded-4">
                     <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
-                        <h5 class="fw-bold text-dark"><i class="bi bi-clipboard-x text-secondary me-2"></i>Actividades Archivadas</h5>
+                        <h5 class="fw-bold text-dark"><i class="bi bi-clipboard-x text-secondary me-2"></i>Actividades
+                            Archivadas</h5>
                     </div>
                     <div class="card-body p-0">
                         <table class="table table-hover align-middle mb-0">
@@ -132,23 +160,38 @@
                                 {% if actividades %}
                                 {% for act in actividades %}
                                 <tr>
-                                    <td class="ps-4"><span class="badge bg-secondary">{{ act.parametro.paralelo.nombre }}</span></td>
-                                    <td><span class="badge bg-light text-dark border">{{ act.parametro.nombre_parametro }}</span></td>
+                                    <td class="ps-4"><span class="badge bg-secondary">{{ act.parametro.paralelo.nombre
+                                            }}</span></td>
+                                    <td><span class="badge bg-light text-dark border">{{ act.parametro.nombre_parametro
+                                            }}</span></td>
                                     <td class="text-muted">
                                         <del>{{ act.titulo }}</del><br>
-                                        <small style="font-size: 0.75rem;">Fecha: {{ act.fecha.strftime('%d-%m-%Y') }}</small>
+                                        <small style="font-size: 0.75rem;">Fecha: {{ act.fecha.strftime('%d-%m-%Y')
+                                            }}</small>
                                     </td>
                                     <td class="text-end pe-4">
-                                        <form action="{{ url_for('papelera.restaurar_actividad', id=act.id) }}" method="POST">
+                                        <form action="{{ url_for('papelera.restaurar_actividad', id=act.id) }}"
+                                            method="POST" class="d-inline">
                                             <button type="submit" class="btn btn-sm btn-outline-success fw-bold">
                                                 <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                                            </button>
+                                        </form>
+                                        <form
+                                            action="{{ url_for('papelera.eliminar_actividad_definitiva', id=act.id) }}"
+                                            method="POST" class="d-inline ms-1">
+                                            <button type="submit" class="btn btn-sm btn-danger shadow-sm"
+                                                onclick="return confirm('¿Destruir definitivamente esta actividad y sus calificaciones?');">
+                                                <i class="bi bi-x-octagon-fill"></i> Destruir
                                             </button>
                                         </form>
                                     </td>
                                 </tr>
                                 {% endfor %}
                                 {% else %}
-                                <tr><td colspan="4" class="text-center py-4 text-muted small">No hay actividades en la papelera.</td></tr>
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted small">No hay actividades en la
+                                        papelera.</td>
+                                </tr>
                                 {% endif %}
                             </tbody>
                         </table>
@@ -160,10 +203,52 @@
     </div>
 
     <div class="tab-pane fade" id="config" role="tabpanel">
-        <div class="alert alert-secondary py-4 text-center border-0 rounded-4 mt-3">
-            <i class="bi bi-tools display-4 text-secondary opacity-50 mb-3 d-block"></i>
-            <h5 class="fw-bold text-dark">Área de Configuración</h5>
-            <p class="text-muted mb-0">Aquí aparecerán las Materias Base y las Cuentas de Auxiliares/Administradores que sean dadas de baja en el futuro.</p>
+        <div class="row g-4 mt-1">
+            
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
+                        <h5 class="fw-bold text-dark"><i class="bi bi-book-half text-warning me-2"></i>Materias Archivadas</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Sigla</th>
+                                    <th>Nombre de la Materia</th>
+                                    <th class="text-end pe-4">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if materias %}
+                                {% for materia in materias %}
+                                <tr>
+                                    <td class="ps-4 text-muted"><code>{{ materia.sigla }}</code></td>
+                                    <td class="text-muted"><del>{{ materia.nombre }}</del></td>
+                                    <td class="text-end pe-4">
+                                        <form action="{{ url_for('papelera.restaurar_materia', id=materia.id) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-success fw-bold" title="Restaurar Materia">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('papelera.eliminar_materia_definitiva', id=materia.id) }}" method="POST" class="d-inline ms-1">
+                                            <button type="submit" class="btn btn-sm btn-danger shadow-sm" title="Destruir Materia"
+                                                onclick="return confirm('⚠️ ADVERTENCIA CRÍTICA:\n\nSi eliminas esta materia, se DESTRUIRÁN automáticamente TODOS los paralelos, estudiantes y notas asociadas a ella en el sistema.\n\nEsta acción NO se puede deshacer. ¿Continuar?');">
+                                                <i class="bi bi-x-octagon-fill"></i> Destruir
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr><td colspan="3" class="text-center py-4 text-muted small">No hay materias en la papelera.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 

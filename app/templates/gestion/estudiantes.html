@@ -71,9 +71,20 @@
                                 <i class="bi bi-pencil-square"></i>
                             </button>
 
+                            <form
+                                action="{{ url_for('gestion.restablecer_credenciales', estudiante_id=inscripcion.estudiante.id) }}"
+                                method="POST" class="d-inline me-1">
+                                <button type="submit" class="btn btn-sm btn-warning shadow-sm"
+                                    title="Restablecer Contraseña"
+                                    onclick="return confirm('¿Estás seguro de restablecer el usuario y contraseña de este estudiante?\n\nAmbos volverán a ser su número de C.I. ({{ inscripcion.estudiante.ci }})');">
+                                    <i class="bi bi-key-fill text-dark"></i>
+                                </button>
+                            </form>
+
                             <form action="{{ url_for('gestion.eliminar_inscripcion', id=inscripcion.id) }}"
                                 method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Dar de baja"
+                                <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm"
+                                    title="Dar de baja"
                                     onclick="return confirm('¿Estás seguro de dar de baja a este estudiante del paralelo?');">
                                     <i class="bi bi-person-x"></i>
                                 </button>
@@ -113,13 +124,16 @@
                                                     <label class="form-label text-muted fw-semibold text-sm">C.I.
                                                         *</label>
                                                     <input type="text" class="form-control" name="ci"
-                                                        value="{{ inscripcion.estudiante.ci }}" required>
+                                                        value="{{ inscripcion.estudiante.ci }}" pattern="[0-9]+"
+                                                        title="Solo ingresa números, sin letras de expedición ni espacios"
+                                                        required>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label
                                                         class="form-label text-muted fw-semibold text-sm">R.U.</label>
                                                     <input type="text" class="form-control" name="ru"
-                                                        value="{{ inscripcion.estudiante.ru or '' }}">
+                                                        value="{{ inscripcion.estudiante.ru or '' }}" pattern="[0-9]*"
+                                                        title="Solo ingresa números">
                                                 </div>
                                             </div>
                                         </div>
@@ -181,12 +195,15 @@
                         <div class="col-md-6">
                             <label class="form-label text-muted fw-semibold text-sm">Carnet de Identidad (C.I.)
                                 *</label>
-                            <input type="text" class="form-control" name="ci" required autocomplete="off">
+                            <input type="text" class="form-control" name="ci" pattern="[0-9]+"
+                                title="Solo ingresa números, sin letras de expedición ni espacios" required
+                                autocomplete="off">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-muted fw-semibold text-sm">Registro Universitario
                                 (R.U.)</label>
-                            <input type="text" class="form-control" name="ru" placeholder="Opcional" autocomplete="off">
+                            <input type="text" class="form-control" name="ru" placeholder="Opcional" pattern="[0-9]*"
+                                title="Solo ingresa números" autocomplete="off">
                         </div>
                     </div>
                 </div>

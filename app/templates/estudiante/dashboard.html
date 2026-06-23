@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Portal - SysAux{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 rounded-4 shadow-sm overflow-hidden" style="background: linear-gradient(135deg, #198754 0%, #146c43 100%);">
+            <div class="card-body p-4 text-white position-relative">
+                <div class="position-relative z-1">
+                    <span class="badge bg-white text-success mb-2 px-3 py-2 rounded-pill fw-bold shadow-sm">
+                        <i class="bi bi-person-badge-fill me-1"></i> Portal del Estudiante
+                    </span>
+                    <h3 class="fw-bolder mb-1">¡Hola, {{ current_user.nombres.split()[0] }}!</h3>
+                    <p class="opacity-75 mb-0 small">Revisa tus notas y registra tu asistencia.</p>
+                </div>
+                <i class="bi bi-mortarboard-fill position-absolute end-0 bottom-0 opacity-10" style="font-size: 6rem; margin-bottom: -1rem; margin-right: -0.5rem;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold text-dark mb-3"><i class="bi bi-journal-bookmark-fill text-secondary me-2"></i>Mis Materias Activas</h5>
+
+<div class="row g-3 mb-5">
+    {% if inscripciones %}
+        {% for insc in inscripciones %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm border-0 rounded-4 h-100 border-start border-success border-5">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-light text-dark border mb-2">{{ insc.paralelo.materia.sigla }}</span>
+                            <h5 class="fw-bold text-dark mb-0">{{ insc.paralelo.materia.nombre }}</h5>
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted small mb-4">
+                        <i class="bi bi-person-workspace me-1"></i> Auxiliar: {{ insc.paralelo.auxiliar.nombres }} {{ insc.paralelo.auxiliar.apellidos }}<br>
+                        <i class="bi bi-diagram-2 me-1"></i> Paralelo: <strong class="text-dark">{{ insc.paralelo.nombre }}</strong>
+                    </p>
+                    
+                    <div class="mt-auto d-grid gap-2">
+                        <a href="{{ url_for('estudiante.rendimiento', paralelo_id=insc.paralelo.id) }}" class="btn btn-outline-success fw-bold py-2 rounded-3">
+                            <i class="bi bi-bar-chart-line-fill me-1"></i> Ver mi Rendimiento
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-inline-flex p-4 mb-3">
+                <i class="bi bi-journal-x display-4"></i>
+            </div>
+            <h5 class="fw-bold text-dark">No tienes materias inscritas</h5>
+            <p class="text-muted">Si deberías estar en un curso, asegúrate de que el Auxiliar te haya matriculado o pídele el Código de Inscripción.</p>
+            
+            <button class="btn btn-primary mt-2 shadow-sm rounded-pill px-4">
+                <i class="bi bi-upc-scan me-2"></i> Unirme a un Paralelo
+            </button>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

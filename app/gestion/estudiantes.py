@@ -8,6 +8,8 @@ from datetime import datetime
 from . import gestion_bp
 from ..models import Paralelo, Usuario, Inscripcion, Rol
 from ..extensions import db, bcrypt
+import re # IMPORTANTE: Nuestra herramienta "colador" para limpiar letras y basura de los inputs
+
 
 @gestion_bp.route('/paralelo/<int:id>/estudiantes', methods=['GET', 'POST'])
 @login_required
@@ -20,27 +22,34 @@ def estudiantes(id):
     if request.method == 'POST':
         nombres = request.form.get('nombres')
         apellidos = request.form.get('apellidos')
-        ci = request.form.get('ci')
-        ru = request.form.get('ru')
+        
+        # --- Sanitización: El famoso 'colador' ---
+        # No confiamos en el form. Dejamos solo números puros para no tener líos con los 'LP' o espacios
+        ci_crudo = request.form.get('ci', '').strip()
+        ci = re.sub(r'\D', '', ci_crudo) 
+        
+        ru_crudo = request.form.get('ru', '').strip()
+        ru = re.sub(r'\D', '', ru_crudo) if ru_crudo else None
 
         estudiante = Usuario.query.filter_by(ci=ci).first()
         
+        # Si el estudiante es nuevo, le armamos su cuenta al vuelo
         if not estudiante:
             rol_estudiante = Rol.query.filter_by(nombre='Estudiante').first()
-            hashed_pw = bcrypt.generate_password_hash(ci).decode('utf-8')
+            hashed_pw = bcrypt.generate_password_hash(ci).decode('utf-8') # Por defecto, C.I. como password
             estudiante = Usuario(
                 nombres=nombres.upper(), 
                 apellidos=apellidos.upper(), 
                 ci=ci, 
-                ru=ru if ru else None, 
-                username=ci, 
+                ru=ru, 
+                username=ci, # Por defecto, C.I. como username
                 password_hash=hashed_pw, 
                 rol_id=rol_estudiante.id,
                 estado=True
             )
             db.session.add(estudiante)
             
-            # Control de duplicados en el registro manual unificado
+            # Savepoint: Si esto explota por un duplicado fantasma, lo atajamos sin tumbar el servidor
             try:
                 db.session.flush()
             except IntegrityError:
@@ -48,27 +57,29 @@ def estudiantes(id):
                 flash('Error: El C.I. o el R.U. ingresado ya le pertenece a otra cuenta en el sistema.', 'danger')
                 return redirect(url_for('gestion.estudiantes', id=id))
 
-    # Control de la inscripción manual garantizando el estado activo
+        # Control de inscripción manual garantizando el estado activo
         inscripcion_previa = Inscripcion.query.filter_by(estudiante_id=estudiante.id, paralelo_id=id).first()
         
         if sig_insc := inscripcion_previa:
             if not sig_insc.estado:
-                sig_insc.estado = True # Lo restauro si fue dado de baja previamente
+                sig_insc.estado = True # Si estaba dado de baja, lo revivimos mágicamente
                 flash('Inscripción del estudiante reactivada.', 'success')
             else:
                 flash('El estudiante ya está inscrito en este paralelo.', 'warning')
         else:
-            nueva_inscripcion = Alignment = Inscripcion(estudiante_id=estudiante.id, paralelo_id=id, estado=True)
+            # Inscripción limpiecita desde cero
+            nueva_inscripcion = Inscripcion(estudiante_id=estudiante.id, paralelo_id=id, estado=True)
             db.session.add(nueva_inscripcion)
             flash('Estudiante inscrito exitosamente.', 'success')
             
         db.session.commit()
         return redirect(url_for('gestion.estudiantes', id=id))
 
-    # Consulto las inscripciones activas y las ordeno alfabéticamente por el apellido del estudiante
+    # Consultamos y ordenamos alfabéticamente para que la vista del Auxi sea impecable
     inscripciones_bd = Inscripcion.query.filter_by(paralelo_id=id, estado=True).all()
     inscripciones = sorted(inscripciones_bd, key=lambda i: (i.estudiante.apellidos, i.estudiante.nombres))
     return render_template('gestion/estudiantes.html', paralelo=paralelo, inscripciones=inscripciones)
+
 
 @gestion_bp.route('/estudiante/<int:id>/editar', methods=['POST'])
 @login_required
@@ -78,17 +89,23 @@ def editar_estudiante(id):
     
     estudiante.nombres = request.form.get('nombres').upper()
     estudiante.apellidos = request.form.get('apellidos').upper()
-    estudiante.ci = request.form.get('ci')
-    estudiante.ru = request.form.get('ru') or None
+    
+    # Sanitización al Editar: Volvemos a aplicar el colador por si el Auxi metió una letra sin querer
+    ci_crudo = request.form.get('ci', '').strip()
+    estudiante.ci = re.sub(r'\D', '', ci_crudo)
+    
+    ru_crudo = request.form.get('ru', '').strip()
+    estudiante.ru = re.sub(r'\D', '', ru_crudo) if ru_crudo else None
     
     try:
         db.session.commit()
         flash('Datos del estudiante actualizados correctamente.', 'success')
     except IntegrityError:
-        db.session.rollback() 
+        db.session.rollback() # Evitamos colisiones si le intenta poner un R.U. que ya existe
         flash('Error de duplicidad: El C.I. o el R.U. que intentas asignar ya le pertenece a otro estudiante.', 'danger')
         
     return redirect(url_for('gestion.estudiantes', id=paralelo_id))
+
 
 @gestion_bp.route('/inscripcion/<int:id>/eliminar', methods=['POST'])
 @login_required
@@ -96,15 +113,15 @@ def eliminar_inscripcion(id):
     inscripcion = Inscripcion.query.get_or_404(id)
     paralelo_id = inscripcion.paralelo_id
     if inscripcion.paralelo.auxiliar_id == current_user.id:
+        # Baja lógica: Nunca hacemos DELETE físico para no huérfanizar las notas
         inscripcion.estado = False
         db.session.commit()
         flash('Estudiante dado de baja del paralelo.', 'info')
     return redirect(url_for('gestion.estudiantes', id=paralelo_id))
 
 
-# ==============================================================================
-# MOTOR BLINDADO: SAVEPOINTS Y DOBLE VERIFICACIÓN ANTI-COLISIONES
-# ==============================================================================
+# --- MOTOR BLINDADO: IMPORTACIÓN MASIVA DESDE EXCEL ---
+# Con doble validación anti-colisiones y savepoints anidados
 @gestion_bp.route('/paralelo/<int:id>/importar_estudiantes', methods=['POST'])
 @login_required
 def importar_estudiantes(id):
@@ -130,7 +147,7 @@ def importar_estudiantes(id):
 
             alumnos_inscritos = 0
             alumnos_existentes_en_paralelo = 0
-            errores_omitidos = 0 # Contador para saber cuántos chocaron
+            errores_omitidos = 0 # Contador para saber cuántos chocaron en el intento
             rol_estudiante = Rol.query.filter_by(nombre='Estudiante').first()
 
             for row in ws.iter_rows(min_row=2, values_only=True):
@@ -138,13 +155,19 @@ def importar_estudiantes(id):
                     continue
 
                 nombre_completo_crudo = str(row[0]).strip()
-                ci = str(row[1]).strip()
-                ru = str(row[2]).strip() if len(row) > 2 and row[2] is not None else None
+                
+                # --- Sanitización extrema del EXCEL ---
+                # Las listas oficiales siempre traen basura. Aquí lo dejamos impecable.
+                ci_crudo = str(row[1]).strip()
+                ci = re.sub(r'\D', '', ci_crudo) 
+                
+                ru_crudo = str(row[2]).strip() if len(row) > 2 and row[2] is not None else None
+                ru = re.sub(r'\D', '', ru_crudo) if ru_crudo else None
 
                 if not nombre_completo_crudo or not ci:
                     continue
 
-                # Parseo sintáctico de nombres
+                # Inteligencia artificial rústica para separar Apellidos y Nombres
                 if ',' in nombre_completo_crudo:
                     partes = nombre_completo_crudo.split(',')
                     apellidos = partes[0].strip().upper()
@@ -164,11 +187,11 @@ def importar_estudiantes(id):
                         apellidos = "SIN APELLIDO"
                         nombres = palabras[0].upper()
 
-                # PASO 1: Búsqueda expansiva. Verifico si el CI ya existe como 'ci' o como 'username'
+                # Búsqueda expansiva: ¿Ya lo tenemos en el sistema?
                 estudiante = Usuario.query.filter(or_(Usuario.ci == ci, Usuario.username == ci)).first()
 
                 if not estudiante:
-                    # Si es nuevo, uso un SAVEPOINT. Si algo explota aquí, no afecta al resto de la lista.
+                    # SAVEPOINT 1: Intentamos crearlo. Si algo falla (ej. RU repetido), lo omitimos y seguimos
                     try:
                         with db.session.begin_nested():
                             hashed_pw = bcrypt.generate_password_hash(ci).decode('utf-8')
@@ -184,17 +207,16 @@ def importar_estudiantes(id):
                             )
                             db.session.add(estudiante)
                     except IntegrityError:
-                        # Si chocó por un R.U. duplicado o algo similar, lo ignoramos y pasamos al siguiente
                         errores_omitidos += 1
                         continue 
 
-                # PASO 2: Matriculación con Savepoint
-                if estudiante: # Me aseguro de que el estudiante exista en este punto
+                if estudiante: 
                     inscripcion_existente = Inscripcion.query.filter_by(
                         paralelo_id=paralelo.id, 
                         estudiante_id=estudiante.id
                     ).first()
 
+                    # SAVEPOINT 2: Matriculación segura
                     if not inscripcion_existente:
                         try:
                             with db.session.begin_nested():
@@ -221,10 +243,10 @@ def importar_estudiantes(id):
                         else:
                             alumnos_existentes_en_paralelo += 1
 
-            # Aplico el COMMIT final que guardará a todos los alumnos exitosos de un solo golpe
+            # COMMIT MÁGICO: Guardamos a todos los sobrevivientes de un solo golpe
             db.session.commit()
             
-            # Reporte detallado al usuario
+            # Reporte detallado para saber exactamente qué pasó en las tripas del proceso
             if alumnos_inscritos > 0:
                 flash(f'Éxito: Se matricularon {alumnos_inscritos} estudiantes correctamente.', 'success')
             if alumnos_existentes_en_paralelo > 0:
@@ -237,8 +259,24 @@ def importar_estudiantes(id):
         except Exception as e:
             db.session.rollback()
             flash(f'Error al procesar el archivo Excel: Asegúrate de usar el formato correcto.', 'danger')
-            print(f"Error interno: {str(e)}") # Para que lo veas en la consola sin asustar al usuario web
+            print(f"Error interno: {str(e)}") # Para debuggear en consola sin asustar al usuario
     else:
         flash('Formato no permitido. Sube un archivo Excel válido (.xlsx).', 'danger')
 
     return redirect(url_for('gestion.estudiantes', id=id))
+
+
+# --- EL SALVAVIDAS DEL AUXI ---
+# Para cuando los alumnos se olvidan su contraseña o cambian su username y se quedan afuera
+@gestion_bp.route('/estudiante/<int:estudiante_id>/restablecer_credenciales', methods=['POST'])
+@login_required
+def restablecer_credenciales(estudiante_id):
+    estudiante = Usuario.query.get_or_404(estudiante_id)
+    
+    # Reseteo forzoso a modo fábrica (C.I.)
+    estudiante.username = estudiante.ci
+    estudiante.password_hash = bcrypt.generate_password_hash(estudiante.ci).decode('utf-8')
+    db.session.commit()
+    
+    flash(f'Credenciales de {estudiante.nombres} restablecidas con éxito. Usuario y Contraseña ahora son su C.I.', 'success')
+    return redirect(request.referrer or url_for('gestion.paralelos'))
