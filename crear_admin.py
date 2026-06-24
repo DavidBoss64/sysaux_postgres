@@ -24,8 +24,8 @@ with app.app_context():
         hashed_pw = bcrypt.generate_password_hash('discreta123').decode('utf-8')
         
         admin_user = Usuario(
-            nombres='Administrador',
-            apellidos='SysAux',
+            nombres='Jose David',
+            apellidos='Lecoña Huayhua',
             ci='0000000',
             ru=None,  # Como definimos, el RU no es obligatorio
             username='admin_aux',

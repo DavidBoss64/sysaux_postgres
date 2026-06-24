@@ -92,3 +92,36 @@ def eliminar_parametro(id):
         db.session.commit()
         flash('Parámetro eliminado.', 'info')
     return redirect(url_for('gestion.parametros', id=parametro.paralelo_id))
+
+
+@gestion_bp.route('/paralelo/<int:id>/reajustar_parametros', methods=['POST'])
+@login_required
+def reajustar_parametros(id):
+    paralelo = Paralelo.query.get_or_404(id)
+    if paralelo.auxiliar_id != current_user.id:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('gestion.paralelos'))
+
+    nuevas_ponderaciones = {}
+    for key, value in request.form.items():
+        if key.startswith('param_'):
+            param_id = int(key.split('_')[1])
+            # Convertimos a float manejando posibles inputs vacíos
+            nuevas_ponderaciones[param_id] = float(value) if value else 0.0
+
+    # Validamos matemáticamente que no te pases de la nota máxima
+    suma_total = sum(nuevas_ponderaciones.values())
+    if suma_total > paralelo.nota_maxima:
+        flash(f'Error crítico: La suma ({suma_total}) excede la nota máxima del paralelo ({paralelo.nota_maxima}). No se guardaron los cambios.', 'danger')
+        return redirect(url_for('gestion.parametros', id=paralelo.id))
+
+    # Si la validación pasa, actualizamos la base de datos
+    for param_id, nueva_pond in nuevas_ponderaciones.items():
+        parametro = ParametroEvaluacion.query.get(param_id)
+        # Aseguramos de que solo cambie los normales y asistencias que pertenecen a este paralelo
+        if parametro and parametro.paralelo_id == paralelo.id and parametro.tipo in ['normal', 'asistencia']:
+            parametro.ponderacion = nueva_pond
+    
+    db.session.commit()
+    flash('¡Ponderaciones reajustadas con éxito! Las notas de los estudiantes se han recalculado automáticamente a la nueva escala.', 'success')
+    return redirect(url_for('gestion.parametros', id=paralelo.id))

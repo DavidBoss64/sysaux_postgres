@@ -20,7 +20,6 @@ def login():
         password = request.form.get('password')
 
         # Buscamos al usuario de forma exacta (respetando mayúsculas/minúsculas)
-        # Esto permite que el username sea "José" o "jose" y el sistema los diferencie
         usuario = Usuario.query.filter_by(username=username_input).first()
 
         # Valido la existencia y la contraseña encriptada
@@ -51,35 +50,56 @@ def logout():
     logout_user()
     return redirect(url_for('auth.login'))
 
-
 @auth_bp.route('/perfil', methods=['GET', 'POST'])
 @login_required
 def perfil():
     if request.method == 'POST':
+        username_nuevo = request.form.get('username')
         password_actual = request.form.get('password_actual')
         password_nueva = request.form.get('password_nueva')
         password_confirmar = request.form.get('password_confirmar')
 
-        # 1. Verificamos que la contraseña actual sea correcta
-        if not bcrypt.check_password_hash(current_user.password_hash, password_actual):
-            flash('La contraseña actual ingresada es incorrecta.', 'danger')
-            return redirect(url_for('auth.perfil'))
+        cambios_realizados = False
 
-        # 2. Verificamos que las contraseñas nuevas coincidan
-        if password_nueva != password_confirmar:
-            flash('Las contraseñas nuevas no coinciden.', 'warning')
-            return redirect(url_for('auth.perfil'))
+        # --- 1. Lógica de actualización de Username (Solo Admin/Auxiliar) ---
+        if current_user.rol.nombre.lower() in ['administrador', 'auxiliar']:
+            if username_nuevo:
+                username_nuevo = username_nuevo.strip()
+                if username_nuevo != current_user.username:
+                    # Validamos que no exista ya en la base de datos
+                    usuario_existente = Usuario.query.filter_by(username=username_nuevo).first()
+                    if usuario_existente:
+                        flash('El nombre de usuario ingresado ya está en uso. Por favor, elige otro.', 'danger')
+                        return redirect(url_for('auth.perfil'))
+                    
+                    current_user.username = username_nuevo
+                    cambios_realizados = True
 
-        # 3. Validamos longitud por seguridad
-        if len(password_nueva) < 6:
-            flash('La nueva contraseña debe tener al menos 6 caracteres.', 'warning')
-            return redirect(url_for('auth.perfil'))
+        # --- 2. Lógica de actualización de Contraseña (Opcional) ---
+        if password_nueva:
+            # Si intenta cambiar la contraseña, debe proveer la actual obligatoriamente
+            if not password_actual or not bcrypt.check_password_hash(current_user.password_hash, password_actual):
+                flash('Debes ingresar tu contraseña actual correcta para poder cambiarla.', 'danger')
+                return redirect(url_for('auth.perfil'))
 
-        # 4. Encriptamos y guardamos la nueva clave
-        current_user.password_hash = bcrypt.generate_password_hash(password_nueva).decode('utf-8')
-        db.session.commit()
-        
-        flash('¡Tu contraseña ha sido actualizada con éxito! Utilízala en tu próximo inicio de sesión.', 'success')
+            if password_nueva != password_confirmar:
+                flash('Las contraseñas nuevas no coinciden.', 'warning')
+                return redirect(url_for('auth.perfil'))
+
+            if len(password_nueva) < 6:
+                flash('La nueva contraseña debe tener al menos 6 caracteres.', 'warning')
+                return redirect(url_for('auth.perfil'))
+
+            current_user.password_hash = bcrypt.generate_password_hash(password_nueva).decode('utf-8')
+            cambios_realizados = True
+
+        # --- 3. Guardado final ---
+        if cambios_realizados:
+            db.session.commit()
+            flash('¡Tu perfil ha sido actualizado con éxito!', 'success')
+        else:
+            flash('No se detectaron cambios para guardar.', 'info')
+
         return redirect(url_for('auth.perfil'))
 
     return render_template('auth/perfil.html')

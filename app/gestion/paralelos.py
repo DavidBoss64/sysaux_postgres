@@ -64,3 +64,62 @@ def eliminar_paralelo(id):
         db.session.commit()
         flash('Paralelo archivado.', 'info')
     return redirect(url_for('gestion.paralelos'))
+
+
+from ..models import Calificacion, Actividad, Inscripcion, ParametroEvaluacion
+
+@gestion_bp.route('/paralelo/<int:id>/reiniciar', methods=['POST'])
+@login_required
+def reiniciar_paralelo(id):
+    paralelo = Paralelo.query.get_or_404(id)
+    
+    if paralelo.auxiliar_id != current_user.id:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('gestion.paralelos'))
+
+    # 1. Validación de Seguridad Estricta
+    confirmacion = request.form.get('confirmacion', '').strip()
+    if confirmacion != paralelo.nombre:
+        flash('El texto de confirmación no coincide. El reinicio fue cancelado por seguridad.', 'danger')
+        return redirect(url_for('gestion.paralelos'))
+
+    try:
+        # 2. Identificar a los estudiantes afectados antes de borrar sus inscripciones
+        inscripciones = Inscripcion.query.filter_by(paralelo_id=paralelo.id).all()
+        estudiantes_afectados = [insc.estudiante for insc in inscripciones]
+
+        # 3. Identificar actividades y borrar calificaciones en cascada
+        parametros_ids = [p.id for p in ParametroEvaluacion.query.filter_by(paralelo_id=paralelo.id).all()]
+        actividades = Actividad.query.filter(Actividad.parametro_id.in_(parametros_ids)).all()
+        actividades_ids = [a.id for a in actividades]
+        
+        if actividades_ids:
+            # Borrar Notas
+            Calificacion.query.filter(Calificacion.actividad_id.in_(actividades_ids)).delete(synchronize_session=False)
+            # Borrar Actividades
+            Actividad.query.filter(Actividad.parametro_id.in_(parametros_ids)).delete(synchronize_session=False)
+
+        # 4. Borrar las inscripciones de este paralelo
+        Inscripcion.query.filter_by(paralelo_id=paralelo.id).delete(synchronize_session=False)
+        
+        # Le decimos a la BD que aplique estos borrados temporalmente para el siguiente cálculo
+        db.session.flush()
+
+        # 5. El Limpiador Inteligente de Estudiantes
+        estudiantes_eliminados = 0
+        for estudiante in estudiantes_afectados:
+            # Si el estudiante ya no tiene NINGUNA inscripción activa en el sistema, lo borramos
+            otras_inscripciones = Inscripcion.query.filter_by(estudiante_id=estudiante.id).count()
+            if otras_inscripciones == 0:
+                db.session.delete(estudiante)
+                estudiantes_eliminados += 1
+
+        db.session.commit()
+        flash(f'¡Reinicio exitoso! El paralelo {paralelo.nombre} está limpio y listo para un nuevo semestre. Se eliminaron {estudiantes_eliminados} estudiantes inactivos de la base de datos.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Ocurrió un error crítico durante el reinicio.', 'danger')
+        print(f"Error de Reinicio: {e}") # Para tu consola de desarrollo
+
+    return redirect(url_for('gestion.paralelos'))
