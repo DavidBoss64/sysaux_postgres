@@ -5,7 +5,7 @@
 {% block content %}
 <div class="mb-4 d-flex justify-content-between align-items-center">
     <div>
-        <a href="{{ url_for('gestion.paralelos') }}" class="btn btn-outline-secondary btn-sm mb-2">
+        <a href="{{ url_for('gestion.paralelos') }}" class="btn btn-outline-secondary btn-sm mb-2 shadow-sm">
             <i class="bi bi-arrow-left"></i> Volver a Paralelos
         </a>
         <h2 class="fw-bold text-dark mb-0"><i class="bi bi-gear-fill text-info me-2"></i>Reglas de Evaluación</h2>
@@ -14,10 +14,11 @@
 </div>
 
 <div class="row g-4">
+    <!-- PANEL IZQUIERDO: FORMULARIO Y PROGRESO -->
     <div class="col-md-5">
         <div class="card shadow-sm border-0 rounded-4 mb-4">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-3">Progreso de Ponderación</h5>
+                <h5 class="fw-bold mb-3">Progreso de Ponderación Regular</h5>
 
                 <div class="d-flex justify-content-between mb-1 text-sm fw-medium text-secondary">
                     <span>Asignado: {{ total_puntos }} pts</span>
@@ -31,22 +32,12 @@
                     </div>
                 </div>
 
-                {% if total_puntos >= paralelo.nota_maxima and tiene_liberacion %}
-                <div class="alert alert-success d-flex align-items-center mb-0 py-3 rounded-3" role="alert">
-                    <i class="bi bi-shield-lock-fill me-3 fs-3"></i>
-                    <div>
-                        <strong>¡Configuración Total Bloqueada!</strong><br>
-                        <span class="text-sm">Has asignado los puntos regulares y el examen de liberación con
-                            éxito.</span>
-                    </div>
-                </div>
-                {% else %}
                 {% if total_puntos >= paralelo.nota_maxima %}
                 <div class="alert alert-warning d-flex align-items-center mb-4 py-2" role="alert">
                     <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
                     <div class="text-sm">
                         <strong>Ponderación Regular Completa</strong><br>
-                        Solo puedes habilitar el Examen de Liberación.
+                        Solo puedes añadir parámetros de tipo "Extra" o el Examen de "Liberación".
                     </div>
                 </div>
                 {% endif %}
@@ -56,20 +47,21 @@
                     <div class="mb-3">
                         <label class="form-label text-muted fw-semibold text-sm">Nombre de la Categoría</label>
                         <input type="text" class="form-control" name="nombre_parametro"
-                            placeholder="Ej. Asistencias, Prácticas..." required autocomplete="off">
+                            placeholder="Ej. Asistencias, Prácticas, Seminario..." required autocomplete="off">
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted fw-semibold text-sm">Tipo de Evaluación</label>
                         <select class="form-select" name="tipo" id="selectorTipo" required>
-                            {% if total_puntos < paralelo.nota_maxima %} <option value="normal" selected>Normal (Nota
-                                numérica)</option>
-                                <option value="asistencia">Asistencia (Checkbox / Auto-registro)</option>
-                                {% endif %}
-                                {% if not tiene_liberacion %}
-                                <option value="liberacion" {% if total_puntos>= paralelo.nota_maxima %}selected{% endif
-                                    %} class="text-danger fw-bold">Examen de Liberación (Reemplaza al total)</option>
-                                {% endif %}
+                            {% if total_puntos < paralelo.nota_maxima %} 
+                                <option value="normal" selected>Normal (Prácticas, Controles)</option>
+                                <option value="asistencia">Asistencia (Checkbox)</option>
+                            {% endif %}
+                            <option value="extra" {% if total_puntos >= paralelo.nota_maxima and not tiene_liberacion %}selected{% endif %} class="text-success fw-bold">Extra (Puntos de Bonificación)</option>
+                            
+                            {% if not tiene_liberacion %}
+                                <option value="liberacion" class="text-danger fw-bold">Examen de Liberación</option>
+                            {% endif %}
                         </select>
                     </div>
 
@@ -79,51 +71,26 @@
                             <option value="maximo" selected>📈 Conservar la nota más alta (Recomendado)</option>
                             <option value="reemplazo">🔄 Reemplazar por completo la nota acumulada</option>
                         </select>
-                        <div class="form-text text-sm">Define cómo procesará el centralizador la nota de este examen en
-                            relación al semestre.</div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label text-muted fw-semibold text-sm">Ponderación (Puntos)</label>
+                        <label class="form-label text-muted fw-semibold text-sm">Ponderación (Puntos finales)</label>
                         <input type="number" class="form-control" name="ponderacion" id="inputPonderacion" step="0.1"
-                            min="0.1" data-max-normal="{{ paralelo.nota_maxima - total_puntos }}"
+                            min="0.1" 
+                            data-max-normal="{{ paralelo.nota_maxima - total_puntos }}"
+                            data-max-extra="{{ paralelo.nota_maxima }}"
                             data-max-liberacion="{{ paralelo.nota_maxima }}" required>
                     </div>
                     <button type="submit" class="btn btn-primary w-100 fw-bold">Guardar Parámetro</button>
                 </form>
-                {% endif %}
             </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const selector = document.getElementById('selectorTipo');
-            const input = document.getElementById('inputPonderacion');
-            const grupoModo = document.getElementById('grupoModoLiberacion'); // Contenedor del nuevo campo
-
-            function actualizarFormulario() {
-                if (!selector || !input) return;
-
-                if (selector.value === 'liberacion') {
-                    input.max = input.getAttribute('data-max-liberacion');
-                    input.placeholder = "Máx: " + input.getAttribute('data-max-liberacion');
-                    if (grupoModo) grupoModo.style.display = 'block'; // Mostramos las estrategias si es liberación
-                } else {
-                    input.max = input.getAttribute('data-max-normal');
-                    input.placeholder = "Máx: " + input.getAttribute('data-max-normal');
-                    if (grupoModo) grupoModo.style.display = 'none'; // Escondemos si es normal o asistencia
-                }
-            }
-
-            if (selector) {
-                selector.addEventListener('change', actualizarFormulario);
-                actualizarFormulario();
-            }
-        });
-    </script>
-
+    <!-- PANEL DERECHO: LISTA HÍBRIDA (PC / MÓVIL) -->
     <div class="col-md-7">
+        
+        <!-- VISTA PC -->
         <div class="card shadow-sm border-0 rounded-4 d-none d-md-block">
             <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
                 <h5 class="fw-bold"><i class="bi bi-list-task text-primary me-2"></i>Parámetros Registrados</h5>
@@ -135,7 +102,7 @@
                             <th class="ps-4">Nombre de Categoría</th>
                             <th>Tipo de Evaluación</th>
                             <th>Ponderación</th>
-                            <th class="text-end pe-4">Acción</th>
+                            <th class="text-end pe-4">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -148,14 +115,19 @@
                                 <span class="badge bg-light text-secondary border">Normal</span>
                                 {% elif param.tipo == 'asistencia' %}
                                 <span class="badge bg-success bg-opacity-10 text-success border border-success">Asistencia</span>
+                                {% elif param.tipo == 'extra' %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning"><i class="bi bi-star-fill me-1"></i>Extra</span>
                                 {% elif param.tipo == 'liberacion' %}
                                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Liberación</span>
                                 {% endif %}
                             </td>
                             <td><code>{{ param.ponderacion }} pts</code></td>
                             <td class="text-end pe-4">
+                                <button type="button" class="btn btn-sm btn-outline-secondary shadow-sm me-1" data-bs-toggle="modal" data-bs-target="#editarParametroModal{{ param.id }}" title="Editar Parámetro">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
                                 <form action="{{ url_for('gestion.eliminar_parametro', id=param.id) }}" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('¿Eliminar esta categoría?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('⚠️ ADVERTENCIA: Eliminar esta categoría borrará todas las actividades y notas dentro de ella. ¿Continuar?');">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </form>
@@ -172,13 +144,14 @@
             </div>
         </div>
 
+        <!-- VISTA MÓVIL -->
         <div class="d-block d-md-none mb-4">
             <h5 class="fw-bold mb-3"><i class="bi bi-list-task text-primary me-2"></i>Parámetros Registrados</h5>
             <div class="row g-3">
                 {% if parametros %}
                     {% for param in parametros %}
                     <div class="col-12">
-                        <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-{{ 'danger' if param.tipo == 'liberacion' else ('success' if param.tipo == 'asistencia' else 'secondary') }} border-4">
+                        <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-{{ 'danger' if param.tipo == 'liberacion' else ('warning' if param.tipo == 'extra' else ('success' if param.tipo == 'asistencia' else 'secondary')) }} border-4">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="fw-bold text-dark mb-0">{{ param.nombre_parametro }}</h6>
@@ -190,15 +163,20 @@
                                     <span class="badge bg-light text-secondary border">Normal</span>
                                     {% elif param.tipo == 'asistencia' %}
                                     <span class="badge bg-success bg-opacity-10 text-success border border-success">Asistencia</span>
+                                    {% elif param.tipo == 'extra' %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning"><i class="bi bi-star-fill me-1"></i>Extra</span>
                                     {% elif param.tipo == 'liberacion' %}
                                     <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Liberación</span>
                                     {% endif %}
                                 </div>
 
-                                <div class="border-top pt-2">
-                                    <form action="{{ url_for('gestion.eliminar_parametro', id=param.id) }}" method="POST" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-danger w-100 shadow-sm btn-sm fw-bold" onclick="return confirm('¿Eliminar esta categoría?');">
-                                            <i class="bi bi-trash3 me-1"></i> Eliminar Categoría
+                                <div class="d-flex gap-2 border-top pt-3">
+                                    <button type="button" class="btn btn-outline-secondary flex-fill shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#editarParametroModal{{ param.id }}">
+                                        <i class="bi bi-pencil-square"></i> Editar
+                                    </button>
+                                    <form action="{{ url_for('gestion.eliminar_parametro', id=param.id) }}" method="POST" class="d-flex">
+                                        <button type="submit" class="btn btn-outline-danger shadow-sm btn-sm px-3" onclick="return confirm('¿Eliminar esta categoría y todas sus notas?');">
+                                            <i class="bi bi-trash3"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -213,7 +191,76 @@
                 {% endif %}
             </div>
         </div>
-
     </div>
 </div>
+
+<!-- ========================================== -->
+<!-- MODALES DE EDICIÓN -->
+<!-- ========================================== -->
+{% if parametros %}
+{% for param in parametros %}
+<div class="modal fade text-start" id="editarParametroModal{{ param.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-light rounded-top-4 py-3">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-secondary me-2"></i>Editar Parámetro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('gestion.editar_parametro', id=param.id) }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold text-sm">Nombre de la Categoría *</label>
+                        <input type="text" class="form-control" name="nombre_parametro" value="{{ param.nombre_parametro }}" required autocomplete="off">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold text-sm">Ponderación (Puntos) *</label>
+                        <input type="number" class="form-control" name="ponderacion" value="{{ param.ponderacion }}" step="0.1" min="0.1" required>
+                        <div class="form-text text-sm">Al usar el modelo Base 100, puedes modificar la ponderación de un parámetro en cualquier momento; las notas se adaptarán automáticamente a la nueva escala sin borrarse.</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-3">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success fw-bold">Actualizar Ponderación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selector = document.getElementById('selectorTipo');
+        const input = document.getElementById('inputPonderacion');
+        const grupoModo = document.getElementById('grupoModoLiberacion');
+
+        function actualizarFormulario() {
+            if (!selector || !input) return;
+
+            if (selector.value === 'liberacion') {
+                input.max = input.getAttribute('data-max-liberacion');
+                input.placeholder = "Máx: " + input.getAttribute('data-max-liberacion');
+                if (grupoModo) grupoModo.style.display = 'block'; 
+            } else if (selector.value === 'extra') {
+                input.max = input.getAttribute('data-max-extra');
+                input.placeholder = "Máx bonificación recomendada";
+                if (grupoModo) grupoModo.style.display = 'none';
+            } else {
+                input.max = input.getAttribute('data-max-normal');
+                input.placeholder = "Máx: " + input.getAttribute('data-max-normal');
+                if (grupoModo) grupoModo.style.display = 'none'; 
+            }
+        }
+
+        if (selector) {
+            selector.addEventListener('change', actualizarFormulario);
+            actualizarFormulario();
+        }
+    });
+</script>
 {% endblock %}

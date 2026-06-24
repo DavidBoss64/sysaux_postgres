@@ -29,12 +29,11 @@ def matriz_notas(id):
 
     parametros = ParametroEvaluacion.query.filter_by(paralelo_id=id, estado=True).order_by(ParametroEvaluacion.id).all()
     
-    # -Ordenamos alfabéticamente por Apellidos y luego Nombres ---
     inscripciones_activas = [insc for insc in paralelo.inscripciones if insc.estado]
     estudiantes = sorted([insc.estudiante for insc in inscripciones_activas], key=lambda e: (e.apellidos, e.nombres))
-    # ------------------------------------------------------------------------------------
     
-    parametros_regulares = [p for p in parametros if p.tipo != 'liberacion']
+    # Agrupamos todos los parámetros que se muestran en columnas antes de la nota final
+    parametros_evaluacion = [p for p in parametros if p.tipo != 'liberacion']
     param_liberacion = next((p for p in parametros if p.tipo == 'liberacion'), None)
 
     matriz = []
@@ -49,47 +48,55 @@ def matriz_notas(id):
             'nota_final': 0.0
         }
 
-        # 1. Calcular notas regulares (Promedio directo)
-        for param in parametros_regulares:
+        nota_base_acumulada = 0.0
+        nota_extra_acumulada = 0.0
+
+        # 1. Calcular notas convertidas de Base 100 a su Ponderación
+        for param in parametros_evaluacion:
             actividades = Actividad.query.filter_by(parametro_id=param.id, estado=True).all()
-            suma_puntajes = 0.0
+            suma_puntajes_100 = 0.0
             
             for act in actividades:
                 calif = Calificacion.query.filter_by(actividad_id=act.id, estudiante_id=estudiante.id, estado=True).first()
                 puntaje_obtenido = calif.puntaje if calif else 0.0
                 
                 fila['detalle_actividades'][act.id] = puntaje_obtenido
-                suma_puntajes += puntaje_obtenido
+                suma_puntajes_100 += puntaje_obtenido
 
-            # la nota final del parámetro es simplemente el promedio de sus actividades.
+            # NUEVA LÓGICA MATEMÁTICA: (Promedio sobre 100 / 100) * Ponderación real
             if len(actividades) > 0:
-                nota_parametro = suma_puntajes / len(actividades)
+                promedio_100 = suma_puntajes_100 / len(actividades)
+                nota_convertida = (promedio_100 / 100.0) * param.ponderacion
             else:
-                nota_parametro = 0.0
+                nota_convertida = 0.0
                 
-            fila['notas_regulares'][param.id] = round(nota_parametro, 2)
-            fila['nota_semestre'] += nota_parametro
+            fila['notas_regulares'][param.id] = round(nota_convertida, 2)
             
+            # Separamos las notas base de los puntos extra
+            if param.tipo == 'extra':
+                nota_extra_acumulada += nota_convertida
+            else:
+                nota_base_acumulada += nota_convertida
 
-        #if fila['nota_semestre']>10:
-        #    fila['nota_semestre']==10
+        # 2. Consolidar la Nota del Semestre con el TOPE (Regla del Extra)
+        nota_semestre_bruta = nota_base_acumulada + nota_extra_acumulada
+        fila['nota_semestre'] = round(min(nota_semestre_bruta, paralelo.nota_maxima), 2)
 
-        fila['nota_semestre'] = round(fila['nota_semestre'], 2)
-
-        # 2. Calcular Examen de Liberación
+        # 3. Calcular Examen de Liberación (También en Base 100)
         if param_liberacion:
             actividades_lib = Actividad.query.filter_by(parametro_id=param_liberacion.id, estado=True).first()
             if actividades_lib:
                 calif_lib = Calificacion.query.filter_by(actividad_id=actividades_lib.id, estudiante_id=estudiante.id, estado=True).first()
-                # CORRECCIÓN: Se toma directo, ya está validado sobre el límite
-                puntaje_lib = calif_lib.puntaje if calif_lib else 0.0
+                puntaje_lib_100 = calif_lib.puntaje if calif_lib else 0.0
                 
-                fila['nota_liberacion'] = round(puntaje_lib, 2)
-                fila['detalle_actividades'][actividades_lib.id] = puntaje_lib
+                fila['detalle_actividades'][actividades_lib.id] = puntaje_lib_100
+                # Convertimos la nota de liberación a su ponderación
+                nota_liberacion_convertida = (puntaje_lib_100 / 100.0) * param_liberacion.ponderacion
+                fila['nota_liberacion'] = round(nota_liberacion_convertida, 2)
             else:
                 fila['nota_liberacion'] = 0.0
         
-        # 3. Aplicar Estrategia Final
+        # 4. Aplicar Estrategia Final
         if param_liberacion and fila['nota_liberacion'] is not None and fila['nota_liberacion'] > 0:
             if param_liberacion.modo_liberacion == 'reemplazo':
                 fila['nota_final'] = fila['nota_liberacion']
@@ -98,11 +105,13 @@ def matriz_notas(id):
         else:
             fila['nota_final'] = fila['nota_semestre']
             
-        fila['nota_final'] = round(fila['nota_final'], 2)
+        # REDONDEO ACADÉMICO PARA LA NOTA FINAL (Ej: 50.5 -> 51)
+        fila['nota_final'] = int(fila['nota_final'] + 0.5)
+        
         matriz.append(fila)
 
     return render_template('reportes/matriz_notas.html', 
                         paralelo=paralelo, 
-                        parametros_regulares=parametros_regulares,
+                        parametros_regulares=parametros_evaluacion,
                         param_liberacion=param_liberacion,
                         matriz=matriz)

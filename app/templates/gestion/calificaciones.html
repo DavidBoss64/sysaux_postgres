@@ -9,7 +9,7 @@
         <i class="bi bi-arrow-left"></i> Volver a Actividades
     </a>
     <h2 class="fw-bold text-dark"><i class="bi bi-ui-checks text-success me-2"></i>Calificar Actividad</h2>
-    <h5 class="text-muted">{{ actividad.titulo }} <span class="badge bg-primary ms-2">Máximo: {{ actividad.parametro.ponderacion }} pts</span></h5>
+    <h5 class="text-muted">{{ actividad.titulo }} <span class="badge bg-primary ms-2">Escala: 100 pts</span></h5>
     <p class="text-sm mb-0">Paralelo: <strong>{{ paralelo.nombre }}</strong> ({{ paralelo.materia.nombre }})</p>
 </div>
 
@@ -36,7 +36,7 @@
                             <th>Nombres</th>
                             <th>C.I.</th>
                             <th>R.U.</th>
-                            <th class="text-end pe-4" style="width: 260px;">Puntaje Asignado</th>
+                            <th class="text-end pe-4" style="width: 260px;">Puntaje (Sobre 100)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -62,15 +62,15 @@
                                         <input class="form-check-input fs-4 cursor-pointer shadow-none border-success"
                                             type="checkbox" role="switch"
                                             name="asistencia_{{ inscripcion.estudiante.id }}"
-                                            value="{{ actividad.parametro.ponderacion }}" {% if tiene_asistencia|float > 0 %}checked{% endif %}>
+                                            value="100" {% if tiene_asistencia|float > 0 %}checked{% endif %}>
                                     </div>
                                     {% else %}
                                     <div class="input-group input-group-sm me-2" style="width: auto;">
-                                        <input type="number" step="0.1" min="0" max="{{ actividad.parametro.ponderacion }}"
+                                        <input type="number" step="0.1" min="0" max="100"
                                             class="form-control form-control-sm text-end shadow-none"
                                             style="max-width: 90px;" name="nota_{{ inscripcion.estudiante.id }}"
                                             value="{{ notas.get(inscripcion.estudiante.id, '') }}" placeholder="0.0">
-                                        <span class="input-group-text bg-light text-muted">/ {{ actividad.parametro.ponderacion }}</span>
+                                        <span class="input-group-text bg-light text-muted">/ 100</span>
                                     </div>
                                     {% endif %}
                                     <span id="icono_pc_{{ inscripcion.estudiante.id }}" class="ajax-icon" style="opacity: 0; transition: opacity 0.3s ease; width: 24px; text-align: center;">
@@ -134,12 +134,12 @@
                                         <div class="form-check form-switch mb-0">
                                             {% set tiene_asistencia = notas.get(inscripcion.estudiante.id, 0) %}
                                             <input class="form-check-input fs-2 shadow-sm cursor-pointer border-success" type="checkbox" role="switch"
-                                                name="asistencia_{{ inscripcion.estudiante.id }}" value="{{ actividad.parametro.ponderacion }}" 
+                                                name="asistencia_{{ inscripcion.estudiante.id }}" value="100" 
                                                 {% if tiene_asistencia|float > 0 %}checked{% endif %}>
                                         </div>
                                     {% else %}
                                         <div class="input-group shadow-sm rounded-3">
-                                            <input type="number" step="0.1" max="{{ actividad.parametro.ponderacion }}" min="0" 
+                                            <input type="number" step="0.1" max="100" min="0" 
                                                 class="form-control text-center fw-bold text-primary border-primary bg-light px-1" 
                                                 name="nota_{{ inscripcion.estudiante.id }}" 
                                                 value="{{ notas.get(inscripcion.estudiante.id, '') }}" 
@@ -181,13 +181,11 @@
 
 {% block scripts %}
 <script>
-    // --- BUSCADOR OPTIMIZADO (Para buscar en Tarjetas y Tablas) ---
     document.getElementById('buscadorEstudiante').addEventListener('keyup', function () {
         let filtro = this.value.toLowerCase().trim();
         let filas = document.querySelectorAll('.fila-estudiante');
 
         filas.forEach(function (fila) {
-            // Solo busca dentro de los elementos con clase 'search-target' para no buscar en código o HTML oculto
             let targets = fila.querySelectorAll('.search-target');
             let match = false;
             targets.forEach(function(target) {
@@ -204,7 +202,6 @@
         });
     });
 
-    // --- AUTOGUARDADO EN TIEMPO REAL CON ÍCONO MÁGICO (ADAPTADO A MÓVIL Y PC) ---
     document.addEventListener('DOMContentLoaded', function () {
         const inputsCalificacion = document.querySelectorAll('input[type="number"], input[type="checkbox"]');
 
@@ -225,7 +222,6 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Seleccionamos AMBOS íconos (el de PC y el de Móvil) para sincronizar la UI
                     const spanIconoPC = document.getElementById('icono_pc_' + estudianteId);
                     const spanIconoMovil = document.getElementById('icono_movil_' + estudianteId);
 
@@ -242,7 +238,6 @@
                             if (spanIconoMovil) spanIconoMovil.style.opacity = '0';
                         }, 1500);
 
-                        // Si cambias en móvil, actualiza el input de PC (y viceversa) para no desincronizar el DOM
                         const inputsRelacionados = document.querySelectorAll(`input[name="${this.getAttribute('name')}"]`);
                         inputsRelacionados.forEach(inp => {
                             if (inp !== this) {
