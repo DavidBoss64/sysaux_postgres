@@ -318,7 +318,7 @@ def exportar_excel(id):
         col_idx = 6
         for param in parametros_evaluacion:
             for act in param.actividades:
-                c_nota = ws2.cell(row=i, column=col_idx, value=fila['detalle_actividades'][act.id])
+                c_nota = ws2.cell(row=i, column=col_idx, value=fila['detalle_actividades'].get(act.id, 0.0))
                 c_nota.alignment = align_center
                 c_nota.fill = bg_color
                 aplicar_borde(c_nota)

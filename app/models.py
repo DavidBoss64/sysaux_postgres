@@ -73,7 +73,7 @@ class ParametroEvaluacion(db.Model):
     # --- Estrategia de cálculo para la liberación ---
     modo_liberacion = db.Column(db.String(20), default='maximo') # 'maximo' o 'reemplazo'
 
-    actividades = db.relationship('Actividad', backref='parametro', lazy=True)
+    actividades = db.relationship('Actividad', backref='parametro', lazy=True, cascade='all, delete-orphan')
 
 class Actividad(db.Model):
     __tablename__ = 'actividades'

@@ -83,15 +83,34 @@ def editar_parametro(id):
     flash('Parámetro actualizado con éxito. Las notas se recalcularán automáticamente.', 'success')
     return redirect(url_for('gestion.parametros', id=paralelo.id))
 
+from ..models import Calificacion, Actividad # Asegúrate de tener estas importaciones arriba
+
 @gestion_bp.route('/parametro/<int:id>/eliminar', methods=['POST'])
 @login_required
 def eliminar_parametro(id):
     parametro = ParametroEvaluacion.query.get_or_404(id)
-    if parametro.paralelo.auxiliar_id == current_user.id:
-        db.session.delete(parametro)
+    paralelo_id = parametro.paralelo_id
+    
+    if parametro.paralelo.auxiliar_id != current_user.id:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('gestion.paralelos'))
+
+    try:
+        # ELIMINACIÓN LÓGICA DIRECTA (Soft Delete)
+        parametro.estado = False
+        
+        # También damos de baja (ocultamos) sus actividades asociadas
+        for act in parametro.actividades:
+            act.estado = False
+            
         db.session.commit()
-        flash('Parámetro eliminado.', 'info')
-    return redirect(url_for('gestion.parametros', id=parametro.paralelo_id))
+        flash('Categoría enviada a la Papelera. Puedes restaurarla en cualquier momento.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error al enviar a la papelera.', 'danger')
+        print(f"Error: {e}")
+
+    return redirect(url_for('gestion.parametros', id=paralelo_id))
 
 
 @gestion_bp.route('/paralelo/<int:id>/reajustar_parametros', methods=['POST'])
