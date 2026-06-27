@@ -218,16 +218,19 @@ def importar_estudiantes(id):
 
                     # SAVEPOINT 2: Matriculación segura
                     if not inscripcion_existente:
+                        # ... dentro del if not inscripcion_existente:
                         try:
                             with db.session.begin_nested():
+                                # Usamos datetime.utcnow() que es más compatible con bases de datos en la nube
                                 nueva_inscripcion = Inscripcion(
                                     paralelo_id=paralelo.id,
                                     estudiante_id=estudiante.id,
-                                    fecha_inscripcion=datetime.now(),
+                                    fecha_inscripcion=datetime.utcnow(), 
                                     estado=True
                                 )
                                 db.session.add(nueva_inscripcion)
                                 alumnos_inscritos += 1
+                        # ...
                         except IntegrityError:
                             errores_omitidos += 1
                             continue
